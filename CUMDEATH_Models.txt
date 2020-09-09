@@ -9,7 +9,6 @@ CU:select
 Covid19Sim:Simulator
 CovidAnalytics:DELPHI
 GT:DeepCOVID
-IHME:CurveFit
 Imperial:ensemble1
 Imperial:ensemble2
 IowaStateLW:STEM
@@ -25,14 +24,15 @@ USACE:ERDC_SEIR
 UT:Mobility
 YYG:ParamSearch
 CovidActNow:SEIR_CAN
+IHME:CurveFit
 OliverWyman:Navigator
 epiforecasts:ensemble1
 NotreDame:mobility
 MITCovAlliance:SIR
 Columbia_UNC:SurvCon
-QJHong:Encounter
 RobertWalraven:ESG
 UMich:RidgeTfReg
+QJHong:Encounter
 DDS:NBDS
 Karlen:pypm
 UCM_MESALab:FoGSEIR
@@ -41,4 +41,4 @@ CEID:Walk
 LNQ:ens1
 SteveMcConnell:CovidComplete
 WalmartLabsML:LogForecasting
-UMass:ExpertCrowd
+JHUAPL:Bucky
