@@ -7,11 +7,8 @@ CU:scenario_low
 CU:scenario_mid
 CU:select
 Columbia_UNC:SurvCon
-Covid19Sim:Simulator
 CovidAnalytics:DELPHI
 DDS:NBDS
-IHME:CurveFit
-IowaStateLW:STEM
 JHU_IDD:CovidSP
 Karlen:pypm
 LANL:GrowthRate
@@ -22,3 +19,6 @@ RobertWalraven:ESG
 UCLA:SuEIR
 UMich:RidgeTfReg
 USACE:ERDC_SEIR
+Covid19Sim:Simulator
+IowaStateLW:STEM
+JHUAPL:Bucky
