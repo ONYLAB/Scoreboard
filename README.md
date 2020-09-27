@@ -16,4 +16,4 @@ Epidemiological models of COVID-19 have proliferated quickly. It is important to
 - New data can be downloaded and score can be obtained by running `Notebooks/RunScores.ipynb`:
 
 This code is open source under the MIT License.
-Correspondence on modeling and the code should be directed to carsonc at nih dot gov or osman.yogurtcu at fda dot hhs dot gov.
+Correspondence on modeling and the code should be directed to carsonc at nih dot gov or osman dot yogurtcu at fda dot hhs dot gov.
