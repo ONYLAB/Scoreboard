@@ -14,7 +14,7 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
         model_target (str): 'Case' or 'Death'
         otpfile (str): Name of the scoreboard .pkl output file
     Returns:
-        None 
+        FirstForecasts (pd.DataFrame): check the forecast upload chronology
     """    
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
@@ -25,6 +25,11 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
                          na_values = ['NA', 'no info', '.'], parse_dates=True)
     dfPREDx.drop_duplicates(subset=None, keep = 'first', inplace = True)
     
+    #Get the chronology of team entries to the competition
+    FirstForecasts = dfPREDx.sort_values('forecast_date').drop_duplicates(subset=['team'], keep='first').copy()
+    FirstForecasts['teamexist'] = 1
+    FirstForecasts['cumnumteams'] = FirstForecasts['teamexist'].cumsum()
+        
     if model_target == 'Case':
         dfPRED = dfPREDx[dfPREDx['target'].str.contains('inc case')].copy()
     elif model_target == 'Death':
@@ -46,8 +51,11 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     
     if 'Cases' in Scoreboard.columns:
         Scoreboard.rename(columns={'Cases':'cases'},inplace=True)
+        mylist = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
     if 'Deaths' in Scoreboard.columns:
         Scoreboard.rename(columns={'Deaths':'deaths'},inplace=True)
+        mylist = [0.01,0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
+         0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99]
     
     Scoreboard['target_end_date']= pd.to_datetime(Scoreboard['target_end_date']) 
     Scoreboard['forecast_date']= pd.to_datetime(Scoreboard['forecast_date'])
@@ -58,11 +66,18 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     Scoreboard.rename(columns={'team':'model'},inplace=True)
     Scoreboard['deltaW'] = np.ceil(Scoreboard.delta/7)
     
+    Scoreboard['proper'] = ''
+    for Index in tqdm(range(0,len(Scoreboard))): 
+        modellist = Scoreboard['quantile'].iloc[Index]
+        proper = all(item in modellist for item in mylist)        
+        Scoreboard.iloc[Index, Scoreboard.columns.get_loc('proper')] = proper
+    
     #Calculate the scores and merge those with the Scoreboard dataframe
     Scoreboard['score'] = ''
     Scoreboard['sumpdf'] = ''
     Scoreboard['prange'] = ''
     Scoreboard['p'] = ''
+
     for Index in tqdm(range(0,len(Scoreboard))):    
         result = giveqandscore(Scoreboard,Index)
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('score')] = result[0]
@@ -75,12 +90,14 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     Scoreboard['PE']=pd.DataFrame(Scoreboard['value'].to_list()).median(axis=1)
     
     Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
-    Scoreboard.dropna(inplace=True)
+    #Scoreboard.dropna(inplace=True)
     Scoreboardx = Scoreboard.sort_values('forecast_date').drop_duplicates(subset=['model', 'target_end_date','deltaW'], keep='last').copy()
     Scoreboardx.reset_index(drop=True,inplace=True)
     Scoreboardx['scorecontr']=np.exp(-Scoreboardx['score']/2)
     
     Scoreboardx.to_pickle(otpfile)
+    
+    return FirstForecasts
     
 def cdfpdf(df,Index,dV,withplot: bool = False):
     '''Get pdf from cdf using Scoreboard dataset.
@@ -209,7 +226,7 @@ def giveqandscore(df,Index) -> tuple:
         p = pdfout[indexofactual][0]
         thescore = 2*np.log(p)+1+np.log(actual)+np.log(2*np.pi)
     
-    return (thescore, sumpdfout, prange, p)
+    return (thescore, sumpdfout, prange, p, xout,pdfout)
 
 
 def givePivotScoreFORECAST(Scoreboard,modeltypes) -> tuple:

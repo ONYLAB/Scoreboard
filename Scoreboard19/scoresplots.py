@@ -11,11 +11,21 @@ import matplotlib.dates as mdates
 from .scores import *
 import os
 
-def plotdifferencescdfpdf(Scoreboard):
+def plotdifferencescdfpdf(Scoreboard,model_target):
+    
+    model_targets = ['Case', 'Death']
+    if model_target not in model_targets:
+        raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
+        
+    if model_target == 'Case':
+        titlelabel= 'Weekly Incidental Cases'
+    elif model_target == 'Death':
+        titlelabel= 'Cumulative Deaths'
+        
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
     plt.hist(Scoreboard['prange']-Scoreboard['sumpdf'],bins=50)
     plt.xlabel("Difference between integrated pdf and given cdf")
-    plt.title('COVID-19 Deaths')
+    plt.title('US COVID-19 ' + titlelabel)
     print('===========================')
     print('Maximum % conversion error:')
     print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
@@ -49,6 +59,15 @@ def perdelta(start, end, delta):
     while curr < end:
         yield curr
         curr += delta
+
+def numberofteamsincovidhub(FirstForecasts)->None:
+    fig = plt.figure(num=None, figsize=(4, 4), dpi=300, facecolor='w', edgecolor='k')
+    plt.plot(FirstForecasts['forecast_date'],FirstForecasts['cumnumteams'])
+    plt.xticks(rotation=70)
+    plt.ylabel('Cumulative Number of Teams')
+    plt.xlabel('First Date of Entry')
+    plt.title('Number of Teams in Covid19 Forecast Hub Increases')
+    plt.show(fig)
         
 def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     
@@ -63,7 +82,7 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
         filelabel = 'CUMDEATH'
         titlelabel= 'Cumulative Deaths'
         
-    fig = plt.figure(num=None, figsize=(8, 8), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
     Scoreboard.plot.scatter(x='delta', y='score', marker='.')
     plt.xlabel('N-Days Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
@@ -72,7 +91,7 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
                 dpi=300)
     plt.show(fig)
 
-    fig = plt.figure(num=None, figsize=(8, 8), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
     Scoreboard.plot.scatter(x='deltaW', y='score', marker='.')
     plt.xlabel('N-Weeks Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
@@ -97,7 +116,7 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     plt.show(fig)
 
     fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
-    Scoreboard.deltaW.hist(bins=range(1, 20 + binwidth, binwidth))
+    Scoreboard.deltaW.hist(bins=range(1, int(Scoreboard['deltaW'].max()) + binwidth, binwidth))
     #plt.xlim(0, 22)
     plt.title(titlelabel + ' Forecasts')
     plt.xlabel('N-Weeks Forward Forecast')
@@ -150,7 +169,96 @@ def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod) -> None:
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.title(curmod+': '+str(WeeksAhead)+'-week-ahead Forecasts')
+
+def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks) -> None:
+    """Plots select model predictions against actual data longitudinally
+    Args:
+        Actual (pd.DataFrame): The actual data
+        Scoreboard (pd.DataFrame): The scoreboard dataframe
+        scoretype (str): "Cases" or "Deaths"
+        numweeks (int): number of weeks to plot
+    Returns:
+        None 
+    """
+        
+    scoretypes = ['Cases', 'Deaths']
+    if scoretype not in scoretypes:
+        raise ValueError("Invalid sim type. Expected one of: %s" % scoretypes)  
+
+    if scoretype == 'Cases':
+        titlelabel= 'weekly incidental cases'
+    elif scoretype == 'Deaths':
+        titlelabel= 'cumulative deaths'          
+        
+    numweeks += 1
+    labelp = 'Average Unweighted Forecasts'
+    colors = pl.cm.jet(np.linspace(0,1,numweeks))
+    plt.figure(num=None, figsize=(14, 8), dpi=80, facecolor='w', edgecolor='k')
+    i = 0
     
+    for WeeksAhead in range(1, numweeks):    
+        
+        i += 1
+        Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+        Scoreboardx.sort_values('target_end_date',inplace=True)
+        Scoreboardx.reset_index(inplace=True)
+
+        MerdfPRED = Scoreboardx.copy()   
+        MerdfPRED = (MerdfPRED.groupby(['target_end_date'],
+                                       as_index=False)[['CILO','PE','CIHI']].agg(lambda x: np.mean(x)))
+
+        dates = MerdfPRED['target_end_date']
+        PE = MerdfPRED['PE']
+        CIlow = MerdfPRED['CILO']
+        CIhi = MerdfPRED['CIHI']
+
+        modcol = (colors[i].tolist()[0],
+                  colors[i].tolist()[1],
+                  colors[i].tolist()[2])
+
+        plt.plot(dates,PE,color=modcol,label=str(i)+ ' weeks-ahead')
+        plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)        
+
+    plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
+    plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
+    plt.ylabel('US '+titlelabel, fontsize=18)
+    plt.xlabel('Date', fontsize=18)
+    plt.xticks(rotation=45, fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.fmt_xdata = mdates.DateFormatter('%m-%d')
+    plt.title(labelp, fontsize=18)
+    plt.legend(loc=(1.04,0),labelspacing=.9)
+    
+    plt.figure(num=None, figsize=(14, 8), dpi=80, facecolor='w', edgecolor='k')
+    i = 0
+    
+    for WeeksAhead in range(1, numweeks):    
+        
+        i += 1
+        Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+        Scoreboardx.sort_values('target_end_date',inplace=True)
+        Scoreboardx.reset_index(inplace=True)
+
+        MerdfPRED = Scoreboardx.copy()   
+        MerdfPRED = (MerdfPRED.groupby(['target_end_date'],
+                                       as_index=False)[['score']].agg(lambda x: np.nanmean(x)))
+
+        dates = MerdfPRED['target_end_date']
+        scores = MerdfPRED['score']
+
+        modcol = (colors[i].tolist()[0],
+                  colors[i].tolist()[1],
+                  colors[i].tolist()[2])
+
+        plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks-ahead')
+
+    plt.ylabel('US '+titlelabel, fontsize=18)
+    plt.xlabel('Date', fontsize=18)
+    plt.xticks(rotation=45, fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.fmt_xdata = mdates.DateFormatter('%m-%d')
+    plt.title('Scores for '+labelp, fontsize=18)
+    plt.legend(loc=(1.04,0),labelspacing=.9)    
 
 def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead) -> None:
     """Plots all predictions against actual data longitudinally
@@ -162,6 +270,14 @@ def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead) -> None:
     Returns:
         None 
     """    
+    scoretypes = ['Cases', 'Deaths']
+    if scoretype not in scoretypes:
+        raise ValueError("Invalid sim type. Expected one of: %s" % scoretypes)  
+        
+    if scoretype == 'Cases':
+        titlelabel= 'weekly incidental cases'
+    elif scoretype == 'Deaths':
+        titlelabel= 'cumulative deaths'         
     
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     Scoreboardx.sort_values('target_end_date',inplace=True)
@@ -187,12 +303,12 @@ def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead) -> None:
 
     plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
     plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
-    plt.ylabel('US Cumulative '+scoretype, fontsize=18)
+    plt.ylabel('US '+titlelabel, fontsize=18)
     plt.xlabel('Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.title(str(WeeksAhead)+'-week-ahead Forecasts')        
+    plt.title(str(WeeksAhead)+'-week-ahead Forecasts', fontsize=18)        
 
 def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)

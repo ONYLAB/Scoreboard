@@ -25,6 +25,7 @@ MOBS:GLEAM_COVID,CompartmentalEPI-MetaPop
 Columbia_UNC:SurvCon,Stats&ML
 COVIDhub:baseline,Stats&ML
 DDS:NBDS,Stats&ML
+UCSD_NEU:DeepGLEAM,Stats&ML
 GT:DeepCOVID,Stats&ML
 IHME:CurveFit,Stats&ML
 IowaStateLW:STEM,Stats&ML
@@ -42,6 +43,7 @@ LNQ:ens1,Ensemble
 NotreDame:mobility,Ensemble
 UMass:ExpertCrowd,Ensemble
 CEID:Walk,Stats&ML
+BPagano:RtDriven,CompartmentalEPI
 RPI_UW:Mob_Collision,CompartmentalEPI
 SteveMcConnell:CovidComplete,Stats&ML
 WalmartLabsML:LogForecasting,Stats&ML
