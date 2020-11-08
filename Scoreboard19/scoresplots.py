@@ -61,12 +61,14 @@ def perdelta(start, end, delta):
         curr += delta
 
 def numberofteamsincovidhub(FirstForecasts)->None:
-    fig = plt.figure(num=None, figsize=(4, 4), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(num=None, figsize=(8, 4), dpi=120, facecolor='w', edgecolor='k')
+    FirstForecasts['forecast_date']= pd.to_datetime(FirstForecasts['forecast_date'])
     plt.plot(FirstForecasts['forecast_date'],FirstForecasts['cumnumteams'])
     plt.xticks(rotation=70)
-    plt.ylabel('Cumulative Number of Teams')
+    plt.ylabel('Total Number of Modeling Teams')
     plt.xlabel('First Date of Entry')
     plt.title('Number of Teams in Covid19 Forecast Hub Increases')
+    plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.show(fig)
         
 def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
@@ -252,7 +254,7 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks) -> None:
 
         plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks-ahead')
 
-    plt.ylabel('US '+titlelabel, fontsize=18)
+    plt.ylabel('Scores for US '+titlelabel, fontsize=18)
     plt.xlabel('Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)

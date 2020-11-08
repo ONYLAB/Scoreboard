@@ -1,9 +1,19 @@
 # Read in all the forecast files in data-processed/
 
+#args = commandArgs(trailingOnly=TRUE)
+
 if("dplyr" %in% rownames(installed.packages()) == FALSE) {install.packages("dplyr",repos = "http://cran.us.r-project.org")}
 if("tidyr" %in% rownames(installed.packages()) == FALSE) {install.packages("tidyr",repos = "http://cran.us.r-project.org")}
 if("readr" %in% rownames(installed.packages()) == FALSE) {install.packages("readr",repos = "http://cran.us.r-project.org")}
 if("plyr" %in% rownames(installed.packages()) == FALSE) {install.packages("plyr",repos = "http://cran.us.r-project.org")}
+
+# test if there is at least one argument: if not, return an error
+#if (length(args)==0) {
+#  stop("At least one argument must be supplied (input file).n", call.=FALSE)
+#}
+
+monthfocus = format(Sys.time(), "%Y-%m") #args[1]
+getf = paste('^',monthfocus,".*.csv",sep = '')
 
 library("dplyr")
 library("tidyr")
@@ -63,7 +73,7 @@ locations <- readr::read_csv("../data-locations/locations.csv",
 
 drop.cols <- c('location', 'type', 'abbreviation', 'location_name', 'population')
 
-all_data = read_my_dir(".", "*.csv",
+all_data = read_my_dir(".", getf,
                 into = c("period","team","model",
                          "year","month","day","team2","model_etc")) %>%
   
@@ -76,4 +86,4 @@ all_data = read_my_dir(".", "*.csv",
 
   dplyr::select(-one_of(drop.cols))
 
-write.csv(all_data,"all_dataONY.csv", row.names = FALSE)
+write.csv(all_data,paste(monthfocus,"all_data.osf",sep = '_'), row.names = FALSE)

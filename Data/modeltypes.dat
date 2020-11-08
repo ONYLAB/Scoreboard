@@ -8,6 +8,7 @@ NIHandFDA:SICR,CompartmentalEPI
 CovidAnalytics:DELPHI,CompartmentalEPI
 OliverWyman:Navigator,CompartmentalEPI
 PSI:DRAFT,CompartmentalEPI
+MSRA:DeepST,CompartmentalEPI
 RPI:UW,CompartmentalEPI
 SWC:TerminusCM,CompartmentalEPI
 UA:EpiCovDA,CompartmentalEPI
@@ -48,3 +49,7 @@ RPI_UW:Mob_Collision,CompartmentalEPI
 SteveMcConnell:CovidComplete,Stats&ML
 WalmartLabsML:LogForecasting,Stats&ML
 JHUAPL:Bucky,CompartmentalEPI-MetaPop
+JCB:PRM,Phenomenological
+JHU_CSSE:DECOM,Stats&ML
+USC:SI_kJalpha_RF,CompartmentalEPI-MetaPop
+

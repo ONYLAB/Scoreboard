@@ -2,14 +2,14 @@ Imperial:ensemble2
 Imperial:ensemble1
 IHME:CurveFit
 COVIDhub:baseline
-CU:scenario_high
-CU:nochange
 CU:select
 CU:scenario_mid
 CU:scenario_low
-UMass:ExpertCrowd
+CU:scenario_high
+CU:nochange
 COVIDhub:ensemble
 MOBS:GLEAM_COVID
+UMass:ExpertCrowd
 YYG:ParamSearch
 UT:Mobility
 JHU_IDD:CovidSP
@@ -32,8 +32,8 @@ NotreDame:mobility
 MITCovAlliance:SIR
 QJHong:Encounter
 Columbia_UNC:SurvCon
-UMich:RidgeTfReg
 RobertWalraven:ESG
+UMich:RidgeTfReg
 UCM_MESALab:FoGSEIR
 Karlen:pypm
 DDS:NBDS
@@ -45,3 +45,7 @@ SteveMcConnell:CovidComplete
 JHUAPL:Bucky
 UCSD_NEU:DeepGLEAM
 BPagano:RtDriven
+MSRA:DeepST
+JHU_CSSE:DECOM
+USC:SI_kJalpha_RF
+JCB:PRM
