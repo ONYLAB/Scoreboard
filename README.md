@@ -19,5 +19,7 @@ This code is open source under the MIT License.
 Correspondence on modeling and the code should be directed to carsonc at nih dot gov or osman dot yogurtcu at fda dot hhs dot gov.
 
 ![fignummodel](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/numberofmodels.png)
-![uscases](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/UScases.png)
-![usdeaths](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USdeaths.png)
+
+![uscases](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USCases.png)
+
+![usdeaths](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USDeaths.png)
