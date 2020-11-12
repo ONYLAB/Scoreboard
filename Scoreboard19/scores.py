@@ -52,7 +52,7 @@ def givescoreweightedforecast(Scoreboard,case):
         
     return (qso,vso)
 
-def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case):
+def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case,runtype):
     #str datecut e.g. '2020-07-01'
     #Make sure we take only one prediction per model
     
@@ -65,14 +65,21 @@ def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case):
     predday.drop(predday[predday['model'] == 'COVIDhub:ensemble'].index, inplace = True) 
     
     preddaymerged = predday.merge(scoresframe, left_on=['model'], right_on=['model']).copy()
-    preddaymerged['weights'] = np.exp(preddaymerged['pastscores']/2)
+    
+    if runtype=='weighted':
+        preddaymerged['weights'] = np.exp(preddaymerged['pastscores']/2)
+        modelname='FDANIH:Sweight'
+    elif runtype=='unweighted':
+        preddaymerged['weights'] = 1
+        modelname='FDANIH:Sunweight'
+        
     sumweights = preddaymerged['weights'].sum()
     preddaymerged['weights'] = preddaymerged['weights']/sumweights
     (qso,vso) = givescoreweightedforecast(preddaymerged,case)
     #plt.plot(qso,vso)
 
     if case=='Cases':
-        new_row = {'model':'FDANIH:Sweight',
+        new_row = {'model':modelname,
                    'target_end_date':datepredindate,
                    'forecast_date':datecut,
                   'delta':weekcut*7,
@@ -85,7 +92,7 @@ def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case):
                    'CIHI':max(vso),
                   'cases':Scoreboard[(Scoreboard['target_end_date']==datepred)]['cases'].mean()}
     elif case=='Deaths':
-        new_row = {'model':'FDANIH:Sweight',
+        new_row = {'model':modelname,
                    'target_end_date':datepredindate,
                    'forecast_date':datecut,
                   'delta':weekcut*7,
@@ -110,12 +117,12 @@ def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case):
     return Scoreboard
 
 
-def getweightedmodelalldates(scoreboard,startdate,case):
+def getweightedmodelalldates(scoreboard,startdate,case,nwk,runtype):
     #e.g. startdate '2020-08-01'
     #case e.g. Cases or Deaths
     daterange = pd.date_range(start=startdate, end=pd.to_datetime('today'),freq='W-SAT')
     for datepred in daterange:    
-        scoreboard = getscoresforweightedmodels(scoreboard,datepred.strftime('%Y-%m-%d'),4,case)
+        scoreboard = getscoresforweightedmodels(scoreboard,datepred.strftime('%Y-%m-%d'),nwk,case,runtype)
         
     return scoreboard
 
