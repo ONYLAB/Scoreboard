@@ -38,8 +38,7 @@ def plotUSCumDeaths(US_deaths,figuresdirectory) -> None:
     plt.ylabel('Deaths')
     plt.savefig(figuresdirectory+'/USDeaths.png', 
                 bbox_inches = 'tight',
-                dpi=300)
-    plt.show(fig)    
+                dpi=300) 
     
 def plotUSIncCases(US_cases,figuresdirectory) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
@@ -50,7 +49,6 @@ def plotUSIncCases(US_cases,figuresdirectory) -> None:
     plt.savefig(figuresdirectory+'/USCases.png', 
                 bbox_inches = 'tight',
                 dpi=300)
-    plt.show(fig)    
 
 def perdelta(start, end, delta):
     """Generate a list of datetimes in an 
