@@ -18,4 +18,4 @@ Epidemiological models of COVID-19 have proliferated quickly. It is important to
 This code is open source under the MIT License.
 Correspondence on modeling and the code should be directed to carsonc at nih dot gov or osman dot yogurtcu at fda dot hhs dot gov.
 
-![myfig](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/1Week/CUMDEATH_Average_Forward_Scores_CompartmentalEPI-MetaPopmodels.png)
+<!---![myfig](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/1Week/CUMDEATH_Average_Forward_Scores_CompartmentalEPI-MetaPopmodels.png) --->
