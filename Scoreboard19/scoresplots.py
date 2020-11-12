@@ -30,19 +30,27 @@ def plotdifferencescdfpdf(Scoreboard,model_target):
     print('Maximum % conversion error:')
     print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
 
-def plotUSCumDeaths(US_deaths) -> None:
+def plotUSCumDeaths(US_deaths,figuresdirectory) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
     plt.plot(US_deaths.DateObserved,US_deaths.Deaths)
     plt.xticks(rotation=45)
     plt.title('US Cumulative Deaths')
     plt.ylabel('Deaths')
+    plt.savefig(figuresdirectory+'/USDeaths.png', 
+                bbox_inches = 'tight',
+                dpi=300)
+    plt.show(fig)    
     
-def plotUSIncCases(US_cases) -> None:
+def plotUSIncCases(US_cases,figuresdirectory) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
     plt.plot(US_cases.DateObserved,US_cases.Cases)
     plt.xticks(rotation=45)
     plt.title('US Weekly Incidental Cases')
-    plt.ylabel('Cases')    
+    plt.ylabel('Cases')
+    plt.savefig(figuresdirectory+'/USCases.png', 
+                bbox_inches = 'tight',
+                dpi=300)
+    plt.show(fig)    
 
 def perdelta(start, end, delta):
     """Generate a list of datetimes in an 
@@ -60,7 +68,7 @@ def perdelta(start, end, delta):
         yield curr
         curr += delta
 
-def numberofteamsincovidhub(FirstForecasts)->None:
+def numberofteamsincovidhub(FirstForecasts,figuresdirectory)->None:
     fig = plt.figure(num=None, figsize=(8, 4), dpi=120, facecolor='w', edgecolor='k')
     FirstForecasts['forecast_date']= pd.to_datetime(FirstForecasts['forecast_date'])
     plt.plot(FirstForecasts['forecast_date'],FirstForecasts['cumnumteams'])
@@ -69,6 +77,9 @@ def numberofteamsincovidhub(FirstForecasts)->None:
     plt.xlabel('First Date of Entry')
     plt.title('Number of Teams in Covid19 Forecast Hub Increases')
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
+    plt.savefig(figuresdirectory+'/numberofmodels.png', 
+                bbox_inches = 'tight',
+                dpi=300)
     plt.show(fig)
         
 def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
