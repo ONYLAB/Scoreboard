@@ -5,6 +5,7 @@ import scipy.interpolate
 import pandas as pd
 import numpy as np
 from datetime import date, datetime, timedelta
+import matplotlib.pyplot as plt
 import os
 
 def giveweightsformodels(Scoreboardx,datecut,weekcut):
@@ -219,7 +220,7 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     
     return FirstForecasts
     
-def cdfpdf(df,Index,dV,withplot: bool = False):
+def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
     '''Get pdf from cdf using Scoreboard dataset.
     
     Args:
@@ -296,22 +297,33 @@ def cdfpdf(df,Index,dV,withplot: bool = False):
         pdf = np.gradient(np.array(probgrid, dtype=float), 
             np.array(dpgrid, dtype=float))
         
+        if 'deaths' in df.columns:
+            xlab = 'Cumulative Deaths'
+            actual = df['deaths'].iloc[Index]
+        else:
+            xlab = 'Weekly Incidental Cases'
+            actual = df['cases'].iloc[Index]
+        
         #Start figure
         plt.figure(num=None, figsize=(8, 12), dpi=80, facecolor='w', edgecolor='k')
 
         plt.subplot(2, 1, 1)
         plt.scatter(dp, cdf, s=80, facecolors='none', edgecolors='y')
+        plt.scatter(actual, 0.0, s=80, facecolors='k', edgecolors='k', marker="^")
         plt.plot(dpgrid, probgrid, 'r--')
         plt.plot(dpgrid,pchip_obj1(dpgrid), 'g--')
-        plt.xlabel('Cumulative Cases')
+        plt.xlabel(xlab)
         plt.ylabel('CDF') 
         #----------#
         plt.subplot(2, 1, 2)
         plt.plot(dpgrid, pdf, 'g', label='Linear Interpolation')
         plt.plot(dpgrid, pdf2, 'r', label='Monotone Piecewise Cubic Interpolation')
         plt.legend(loc='best')
-        plt.xlabel('Cumulative Cases')    
+        plt.xlabel(xlab)    
         plt.ylabel('PDF') 
+        plt.savefig(figuresdirectory+'/exampleconversion.svg', 
+            bbox_inches = 'tight',
+            dpi=300)
     
     return (xout,pdfout,sum(pdfout),max(cdf)-min(cdf))    
 
