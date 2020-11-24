@@ -290,6 +290,9 @@ def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
     
     if withplot==True:
         
+        plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
+        plt.rc('ytick', labelsize=16)    # fontsize of the tick labels
+        
         print(df['model'].iloc[Index])
         #Linear Interpolation for CDF based on dpgrid
         probgrid =  np.interp(dpgrid, dp, cdf)
@@ -312,15 +315,17 @@ def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
         plt.scatter(actual, 0.0, s=80, facecolors='k', edgecolors='k', marker="^")
         plt.plot(dpgrid, probgrid, 'r--')
         plt.plot(dpgrid,pchip_obj1(dpgrid), 'g--')
-        plt.xlabel(xlab)
-        plt.ylabel('CDF') 
+        #plt.xlabel(xlab, fontsize=20)
+        plt.ylabel('CDF', fontsize=20) 
+        plt.xticks(rotation=45)
         #----------#
         plt.subplot(2, 1, 2)
         plt.plot(dpgrid, pdf, 'g', label='Linear Interpolation')
         plt.plot(dpgrid, pdf2, 'r', label='Monotone Piecewise Cubic Interpolation')
-        plt.legend(loc='best')
-        plt.xlabel(xlab)    
-        plt.ylabel('PDF') 
+        plt.legend(loc='best', prop={"size":14})
+        plt.xlabel(xlab, fontsize=20)    
+        plt.ylabel('PDF', fontsize=20) 
+        plt.xticks(rotation=45)
         plt.savefig(figuresdirectory+'/exampleconversion.svg', 
             bbox_inches = 'tight',
             dpi=300)

@@ -39,6 +39,9 @@ def plotUSCumDeaths(US_deaths,figuresdirectory) -> None:
     plt.savefig(figuresdirectory+'/USDeaths.png', 
                 bbox_inches = 'tight',
                 dpi=300) 
+    plt.savefig(figuresdirectory+'/USDeaths.svg', 
+                bbox_inches = 'tight',
+                dpi=300)     
     
 def plotUSIncCases(US_cases,figuresdirectory) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
@@ -49,6 +52,9 @@ def plotUSIncCases(US_cases,figuresdirectory) -> None:
     plt.savefig(figuresdirectory+'/USCases.png', 
                 bbox_inches = 'tight',
                 dpi=300)
+    plt.savefig(figuresdirectory+'/USCases.svg', 
+                bbox_inches = 'tight',
+                dpi=300)    
 
 def perdelta(start, end, delta):
     """Generate a list of datetimes in an 
@@ -67,17 +73,20 @@ def perdelta(start, end, delta):
         curr += delta
 
 def numberofteamsincovidhub(FirstForecasts,figuresdirectory)->None:
-    fig = plt.figure(num=None, figsize=(8, 4), dpi=120, facecolor='w', edgecolor='k')
+    fig = plt.figure(num=None, figsize=(6, 4), dpi=120, facecolor='w', edgecolor='k')
     FirstForecasts['forecast_date']= pd.to_datetime(FirstForecasts['forecast_date'])
     plt.plot(FirstForecasts['forecast_date'],FirstForecasts['cumnumteams'])
     plt.xticks(rotation=70)
     plt.ylabel('Total Number of Modeling Teams')
     plt.xlabel('First Date of Entry')
-    plt.title('Number of Teams in Covid19 Forecast Hub Increases')
+    plt.title('Number of Teams in Covid-19 Forecast Hub Increases')
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.savefig(figuresdirectory+'/numberofmodels.png', 
                 bbox_inches = 'tight',
                 dpi=300)
+    plt.savefig(figuresdirectory+'/numberofmodels.svg', 
+            bbox_inches = 'tight',
+            dpi=300)
     plt.show(fig)
         
 def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
@@ -93,25 +102,31 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
         filelabel = 'CUMDEATH'
         titlelabel= 'Cumulative Deaths'
         
-    fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
     Scoreboard.plot.scatter(x='delta', y='score', marker='.')
     plt.xlabel('N-Days Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
     plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Days_Forward_Forecast.png',
                 bbox_inches = 'tight',
                 dpi=300)
+    plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Days_Forward_Forecast.svg',
+                bbox_inches = 'tight',
+                dpi=300)    
     plt.show(fig)
 
-    fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
     Scoreboard.plot.scatter(x='deltaW', y='score', marker='.')
     plt.xlabel('N-Weeks Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
     plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Weeks_Forward_Forecast.png', 
                 bbox_inches = 'tight',
                 dpi=300)
+    plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Weeks_Forward_Forecast.svg', 
+                bbox_inches = 'tight',
+                dpi=300)    
     plt.show(fig)
     
-    fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
     binwidth = 1
     Scoreboard.delta.hist(bins=range(min(Scoreboard.delta), max(Scoreboard.delta) + binwidth, binwidth))
     #plt.xlim(4, 124)
@@ -126,7 +141,7 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
                 dpi=300)
     plt.show(fig)
 
-    fig = plt.figure(figsize=(8, 4), dpi=300, facecolor='w', edgecolor='k')
+    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
     Scoreboard.deltaW.hist(bins=range(1, int(Scoreboard['deltaW'].max()) + binwidth, binwidth))
     #plt.xlim(0, 22)
     plt.title(titlelabel + ' Forecasts')
@@ -138,6 +153,9 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     plt.savefig(figuresdirectory+'/'+filelabel+'_x-Weeks_Forward_Forecast_Hist.png', 
                 bbox_inches = 'tight',
                 dpi=300)
+    plt.savefig(figuresdirectory+'/'+filelabel+'_x-Weeks_Forward_Forecast_Hist.svg', 
+                bbox_inches = 'tight',
+                dpi=300)    
     plt.show(fig)
         
 def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod) -> None:
