@@ -48,7 +48,7 @@ RPI_UW:Mob_Collision,compartmental
 SteveMcConnell:CovidComplete,stat&prob
 WalmartLabsML:LogForecasting,stat&prob 
 JHUAPL:Bucky,metapopulation
-JCB:PRM,statistical&prob 
+JCB:PRM,stat&prob 
 JHU_CSSE:DECOM,stat&prob 
 USC:SI_kJalpha_RF,metapopulation
 UCF:AEM,ensemble
