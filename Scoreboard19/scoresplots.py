@@ -199,7 +199,7 @@ def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod) -> None:
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.title(curmod+': '+str(WeeksAhead)+'-week-ahead Forecasts')
 
-def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks) -> None:
+def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirectory) -> None:
     """Plots select model predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
@@ -222,7 +222,7 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks) -> None:
     numweeks += 1
     labelp = 'Average Unweighted Forecasts'
     colors = pl.cm.jet(np.linspace(0,1,numweeks))
-    plt.figure(num=None, figsize=(14, 8), dpi=80, facecolor='w', edgecolor='k')
+    plt.figure(num=None, figsize=(10, 8), dpi=80, facecolor='w', edgecolor='k')
     i = 0
     
     for WeeksAhead in range(1, numweeks):    
@@ -251,14 +251,17 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks) -> None:
     plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
     plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
     plt.ylabel('US '+titlelabel, fontsize=18)
-    plt.xlabel('Date', fontsize=18)
+    plt.xlabel('Target End Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.title(labelp, fontsize=18)
-    plt.legend(loc=(1.04,0),labelspacing=.9)
-    
-    plt.figure(num=None, figsize=(14, 8), dpi=80, facecolor='w', edgecolor='k')
+    #plt.title(labelp, fontsize=18)
+    plt.legend(loc="upper left",labelspacing=.9)
+    lims = plt.gca().get_xlim()
+    plt.savefig(figuresdirectory+'/'+scoretype+'_Forecasts.svg',
+                dpi=300,bbox_inches = 'tight')    
+
+    plt.figure(num=None, figsize=(10, 8), dpi=80, facecolor='w', edgecolor='k')
     i = 0
     
     for WeeksAhead in range(1, numweeks):    
@@ -281,13 +284,16 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks) -> None:
 
         plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks-ahead')
 
-    plt.ylabel('Scores for US '+titlelabel, fontsize=18)
-    plt.xlabel('Date', fontsize=18)
+    plt.ylabel('Average Scores for US '+titlelabel, fontsize=18)
+    plt.xlabel('Target End Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.title('Scores for '+labelp, fontsize=18)
-    plt.legend(loc=(1.04,0),labelspacing=.9)    
+    #plt.title('Scores for '+labelp, fontsize=18)
+    plt.legend(loc="upper left",labelspacing=.9)
+    plt.gca().set_xlim(xmin=lims[0], xmax=lims[1])
+    plt.savefig(figuresdirectory+'/'+scoretype+'_Average_Forward_Scores.svg',
+                dpi=300,bbox_inches = 'tight')
 
 def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead) -> None:
     """Plots all predictions against actual data longitudinally
