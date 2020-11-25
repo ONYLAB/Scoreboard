@@ -45,7 +45,7 @@ UMass:ExpertCrowd,ensemble
 CEID:Walk,stat&prob 
 BPagano:RtDriven,compartmental
 RPI_UW:Mob_Collision,compartmental
-SteveMcConnell:CovidComplete,Probabilistic
+SteveMcConnell:CovidComplete,stat&prob
 WalmartLabsML:LogForecasting,stat&prob 
 JHUAPL:Bucky,metapopulation
 JCB:PRM,statistical&prob 
