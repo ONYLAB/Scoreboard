@@ -25,8 +25,8 @@ Covid19Sim:Simulator
 USACE:ERDC_SEIR
 SWC:TerminusCM
 Auquan:SEIR
-OliverWyman:Navigator
 CovidActNow:SEIR_CAN
+OliverWyman:Navigator
 epiforecasts:ensemble1
 NotreDame:mobility
 MITCovAlliance:SIR
@@ -34,12 +34,12 @@ QJHong:Encounter
 Columbia_UNC:SurvCon
 UMich:RidgeTfReg
 RobertWalraven:ESG
-UCM_MESALab:FoGSEIR
 Karlen:pypm
+UCM_MESALab:FoGSEIR
 DDS:NBDS
 RPI_UW:Mob_Collision
-CEID:Walk
 LNQ:ens1
+CEID:Walk
 WalmartLabsML:LogForecasting
 SteveMcConnell:CovidComplete
 JHUAPL:Bucky

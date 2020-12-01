@@ -76,46 +76,51 @@ def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case,runtype):
         
     sumweights = preddaymerged['weights'].sum()
     preddaymerged['weights'] = preddaymerged['weights']/sumweights
-    (qso,vso) = givescoreweightedforecast(preddaymerged,case)
-    #plt.plot(qso,vso)
-
-    if case=='Cases':
-        new_row = {'model':modelname,
-                   'target_end_date':datepredindate,
-                   'forecast_date':datecut,
-                  'delta':weekcut*7,
-                  'deltaW':weekcut,
-                  'proper':True,
-                  'quantile':qso,
-                  'value':vso,
-                   'CILO':min(vso),
-                   'PE':np.median(vso),
-                   'CIHI':max(vso),
-                  'cases':Scoreboard[(Scoreboard['target_end_date']==datepred)]['cases'].mean()}
-    elif case=='Deaths':
-        new_row = {'model':modelname,
-                   'target_end_date':datepredindate,
-                   'forecast_date':datecut,
-                  'delta':weekcut*7,
-                  'deltaW':weekcut,
-                  'proper':True,
-                  'quantile':qso,
-                  'value':vso,
-                  'CILO':min(vso),
-                  'PE':np.median(vso),
-                  'CIHI':max(vso),
-                  'deaths':Scoreboard[(Scoreboard['target_end_date']==datepred)]['deaths'].mean()}
     
-    Scoreboard = Scoreboard.append(new_row, ignore_index=True)
+    if preddaymerged.empty:
+        print('DataFrame is empty!')
+        print(datepred)
+    else:
+        (qso,vso) = givescoreweightedforecast(preddaymerged,case)
+        #plt.plot(qso,vso)
 
-    Index = len(Scoreboard)-1
-    result = giveqandscore(Scoreboard,Index)
-    Scoreboard.iloc[Index, Scoreboard.columns.get_loc('score')] = result[0]
-    Scoreboard.iloc[Index, Scoreboard.columns.get_loc('sumpdf')] = result[1]
-    Scoreboard.iloc[Index, Scoreboard.columns.get_loc('prange')] = result[2]
-    Scoreboard.iloc[Index, Scoreboard.columns.get_loc('p')] = result[3]
+        if case=='Cases':
+            new_row = {'model':modelname,
+                       'target_end_date':datepredindate,
+                       'forecast_date':datecut,
+                      'delta':weekcut*7,
+                      'deltaW':weekcut,
+                      'proper':True,
+                      'quantile':qso,
+                      'value':vso,
+                       'CILO':min(vso),
+                       'PE':np.median(vso),
+                       'CIHI':max(vso),
+                      'cases':Scoreboard[(Scoreboard['target_end_date']==datepred)]['cases'].mean()}
+        elif case=='Deaths':
+            new_row = {'model':modelname,
+                       'target_end_date':datepredindate,
+                       'forecast_date':datecut,
+                      'delta':weekcut*7,
+                      'deltaW':weekcut,
+                      'proper':True,
+                      'quantile':qso,
+                      'value':vso,
+                      'CILO':min(vso),
+                      'PE':np.median(vso),
+                      'CIHI':max(vso),
+                      'deaths':Scoreboard[(Scoreboard['target_end_date']==datepred)]['deaths'].mean()}
 
-    return Scoreboard
+        Scoreboard = Scoreboard.append(new_row, ignore_index=True)
+
+        Index = len(Scoreboard)-1
+        result = giveqandscore(Scoreboard,Index)
+        Scoreboard.iloc[Index, Scoreboard.columns.get_loc('score')] = result[0]
+        Scoreboard.iloc[Index, Scoreboard.columns.get_loc('sumpdf')] = result[1]
+        Scoreboard.iloc[Index, Scoreboard.columns.get_loc('prange')] = result[2]
+        Scoreboard.iloc[Index, Scoreboard.columns.get_loc('p')] = result[3]
+
+        return Scoreboard
 
 
 def getweightedmodelalldates(scoreboard,startdate,case,nwk,runtype):
@@ -244,11 +249,11 @@ def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
     #If duplicate forecasts exist for any particular day, then use the average
     mydf = mydf.groupby('cdf', as_index=False).mean() 
     mydf.sort_values(by=['cdf'],inplace=True)
-    cdf = mydf.cdf.to_numpy()
-    dp = mydf.dp.to_numpy().round() 
+    cdf = mydf.cdf.to_numpy() 
+    dp = mydf.dp.to_numpy().round() #number of cases or deaths 
     
     #create grid x-axis
-    dpgrid = np.arange(np.round(min(dp))+0.5,np.round(max(dp))-0.5,1)   
+    dpgrid = np.arange(np.round(min(dp))+0.5,np.round(max(dp))+0.5,1)   
         
     if len(dpgrid)<3:
         #Some predictions have an extremely sharp - impulse-like distributions
@@ -273,7 +278,7 @@ def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
         dp = np.sort(dp)
         
         #recreate grid
-        dpgrid = np.arange(np.round(min(dp))+0.5,np.round(max(dp))-0.5,1)          
+        dpgrid = np.arange(np.round(min(dp))+0.5,np.round(max(dp))+0.5,1)          
         
         #Do PCHIP interpolation
         pchip_obj1 = scipy.interpolate.PchipInterpolator(dp, cdf)

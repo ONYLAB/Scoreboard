@@ -11,7 +11,7 @@ import matplotlib.dates as mdates
 from .scores import *
 import os
 
-def plotdifferencescdfpdf(Scoreboard,model_target):
+def plotdifferencescdfpdf(Scoreboard,model_target,figuresdirectory):
     
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
@@ -29,6 +29,9 @@ def plotdifferencescdfpdf(Scoreboard,model_target):
     print('===========================')
     print('Maximum % conversion error:')
     print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
+    plt.savefig(figuresdirectory+'/diffcdfpdf.svg',
+            bbox_inches = 'tight',
+            dpi=300)    
 
 def plotUSCumDeaths(US_deaths,figuresdirectory) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
@@ -158,7 +161,7 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
                 dpi=300)    
     plt.show(fig)
         
-def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod) -> None:
+def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod,figuresdirectory) -> None:
     """Plots select model predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
@@ -198,6 +201,9 @@ def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod) -> None:
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.title(curmod+': '+str(WeeksAhead)+'-week-ahead Forecasts')
+    plt.savefig(figuresdirectory+'/'+scoretype+'_'+curmod+'_'+str(WeeksAhead)+'wk.svg', 
+                bbox_inches = 'tight',
+                dpi=300)        
 
 def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirectory) -> None:
     """Plots select model predictions against actual data longitudinally
@@ -295,7 +301,7 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
     plt.savefig(figuresdirectory+'/'+scoretype+'_Average_Forward_Scores.svg',
                 dpi=300,bbox_inches = 'tight')
 
-def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead) -> None:
+def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead,figuresdirectory) -> None:
     """Plots all predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
@@ -343,7 +349,9 @@ def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead) -> None:
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.title(str(WeeksAhead)+'-week-ahead Forecasts', fontsize=18)        
+    plt.title(str(WeeksAhead)+'-week-ahead Forecasts', fontsize=18)
+    plt.savefig(figuresdirectory+'/'+scoretype+'_All.svg',
+                dpi=300,bbox_inches = 'tight')    
 
 def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
@@ -395,7 +403,7 @@ def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None
         custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
-        plt.savefig(figuresdirectory+'/'+filelabel+'_Average_Forward_Scores_'+selectmodel+'models.png',
+        plt.savefig(figuresdirectory+'/'+filelabel+'_Average_Forward_Scores_'+selectmodel+'models.svg',
                     dpi=300,bbox_inches = 'tight')
     
         
@@ -453,7 +461,7 @@ def plotgroupsFD(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame,
         custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
-        plt.savefig(figuresdirectory+'/'+str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models.png',
+        plt.savefig(figuresdirectory+'/'+str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models.svg',
                     dpi=300,
                    bbox_inches = 'tight')        
         
