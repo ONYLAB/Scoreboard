@@ -29,7 +29,7 @@ def plotdifferencescdfpdf(Scoreboard,model_target,figuresdirectory):
     print('===========================')
     print('Maximum % conversion error:')
     print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
-    plt.savefig(figuresdirectory+'/diffcdfpdf.svg',
+    plt.savefig(figuresdirectory+'/'+model_target+'_'+'diffcdfpdf.svg',
             bbox_inches = 'tight',
             dpi=300)    
 
