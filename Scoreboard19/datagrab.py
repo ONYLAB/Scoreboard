@@ -74,7 +74,7 @@ def getmodeltypes(Scoreboard)-> pd.DataFrame:
     modeltypes['model'] = modeltypes['model'].str.strip()
     modeltypes['modeltype'] = modeltypes['modeltype'].str.strip()
     print('========================================================')
-    print("Models in Scoreboard that are not yet in modeltypes.dat:")
+    print("Models in the latest Scoreboard that are not yet in modeltypes.dat:")
     print(np.setdiff1d(np.sort(Scoreboard.model.drop_duplicates()), modeltypes.model))
     print("Edit modeltypes.dat accordingly")
     return modeltypes

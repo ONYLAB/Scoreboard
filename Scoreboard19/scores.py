@@ -384,7 +384,7 @@ def givePivotScoreFORECAST(Scoreboard,modeltypes) -> tuple:
         MerdfPRED (pandas pd): merged scoreboard on model scores vs delta in days
         pivMerdfPRED (pandas pd): pivoted MerdfPRED around forecast_date
 
-    '''    
+    '''
     
     #Drop predictions from the same groups that were made on the same exact date and only 
     #take the final prediction
@@ -395,7 +395,7 @@ def givePivotScoreFORECAST(Scoreboard,modeltypes) -> tuple:
     MerdfPRED.replace([np.inf, -np.inf], np.nan,inplace=True)
     MerdfPRED = (MerdfPRED.groupby(['model','modeltype','forecast_date'],
                                             as_index=False)[['delta','score']].agg(lambda x: list(x)))
-    
+    MerdfPRED.dropna(subset=['score'],inplace=True)
     MerdfPRED['nanmean'] = MerdfPRED.apply(lambda row : np.nanmean(row['score']), axis = 1) 
     MerdfPRED['nanstd'] = MerdfPRED.apply(lambda row : np.nanstd(row['score']), axis = 1) 
     
@@ -423,10 +423,10 @@ def givePivotScoreTARGET(Scoreboard,modeltypes) -> tuple:
     MerdfPRED.replace([np.inf, -np.inf], np.nan,inplace=True)
     MerdfPRED = (MerdfPRED.groupby(['model','modeltype','target_end_date'],
                                             as_index=False)[['delta','score']].agg(lambda x: list(x)))
-    
+    MerdfPRED.dropna(subset=['score'],inplace=True)
     MerdfPRED['nanmean'] = MerdfPRED.apply(lambda row : np.nanmean(row['score']), axis = 1) 
     MerdfPRED['nanstd'] = MerdfPRED.apply(lambda row : np.nanstd(row['score']), axis = 1) 
     
-    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='nanmean')
+    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='nanmean') 
     
     return (MerdfPRED,pivMerdfPRED)

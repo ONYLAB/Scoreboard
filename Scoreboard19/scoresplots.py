@@ -252,10 +252,10 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
                   colors[i].tolist()[2])
 
         plt.plot(dates,PE,color=modcol,label=str(i)+ ' weeks-ahead')
-        plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)        
+        #plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)        
 
     plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
-    plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
+    plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.1])
     plt.ylabel('US '+titlelabel, fontsize=18)
     plt.xlabel('Target End Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
@@ -405,6 +405,92 @@ def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None
         plt.xticks(rotation=45)
         plt.savefig(figuresdirectory+'/'+filelabel+'_Average_Forward_Scores_'+selectmodel+'models.svg',
                     dpi=300,bbox_inches = 'tight')
+
+
+def plotgroupsmodelweek(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame, 
+               figuresdirectory: str, numweeks: int, model_target: str) -> None:
+    """Generates modeltype-based score plots in time (Forecast Date)
+    Args:
+        pivMerdfPRED (pd.DataFrame): Start date.
+        modeltypes (pd.DataFrame): model types
+        figuresdirectory (str): direcotry to save in
+        numweeks (int): number of weeks ahead forecast
+        model_target (str): 'Case' or 'Death'
+    Returns:
+        None 
+    """    
+
+    model_targets = ['Case', 'Death']
+    if model_target not in model_targets:
+        raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
+
+    if model_target == 'Case':
+        filelabel = 'INCCASE'
+        titlelabel= 'weekly incidental cases'
+    elif model_target == 'Death':
+        filelabel = 'CUMDEATH'
+        titlelabel= 'cumulative deaths'       
+    
+    Scoreboardx = Scoreboard[Scoreboard['deltaW']==numweeks].copy()
+    (MerdfPRED,pivMerdfPRED) = givePivotScoreTARGET(Scoreboardx,modeltypes)
+    
+    dateticks = list(perdelta(pivMerdfPRED.index[0] - timedelta(days=21), 
+                              pivMerdfPRED.index[-1] + timedelta(days=21), 
+                              timedelta(days=14)))
+    selectmodels = modeltypes['modeltype'].unique().tolist()
+    for selectmodel in selectmodels:
+        models = modeltypes[modeltypes['modeltype']==selectmodel].model.tolist()
+        pivMerdfPRED[selectmodel] = pivMerdfPRED.filter(items=models).mean(axis=1)         
+        
+    listmods = selectmodels
+    colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
+    plt.figure(figsize=(6, 6), dpi=180, facecolor='w', edgecolor='k')
+    for i in range(len(listmods)):
+        if listmods[i] in pivMerdfPRED.columns:
+            if ~pivMerdfPRED[listmods[i]].isnull().all():                
+                pivMerdfPRED[listmods[i]].dropna().plot(color=(colors[i].tolist()[0],
+                                                  colors[i].tolist()[1],
+                                                  colors[i].tolist()[2]),
+                                          marker='o')
+    plt.title(str(numweeks)+'-week ahead forecasts')
+    plt.legend(loc='lower left',labelspacing=.9)
+    plt.ylabel('Model-averaged score for ' + titlelabel)
+    plt.xlabel('Target End Date')
+    #plt.ylim([pivMerdfPRED.min().min()-1, pivMerdfPRED.max().max()+1])
+    plt.xlim([dateticks[0],dateticks[-1]])
+    custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
+    plt.xticks(dateticks,custom_tick_labels)
+    plt.xticks(rotation=45)
+    plt.savefig(figuresdirectory+'/'+filelabel+'_Model_averaged_scores_wk'+str(numweeks)+'models.svg',
+                dpi=300,bbox_inches = 'tight')
+    
+    dateticks = list(perdelta(pivMerdfPRED.index[0] - timedelta(days=14), 
+                          pivMerdfPRED.index[-1] + timedelta(days=14), 
+                          timedelta(days=7)))   
+    for selectmodel in selectmodels:
+        listmods = modeltypes[modeltypes['modeltype']==selectmodel].model.tolist()
+        colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
+        plt.figure(figsize=(12, 6), dpi=180, facecolor='w', edgecolor='k')
+        
+        for i in range(len(listmods)):
+            if listmods[i] in pivMerdfPRED.columns:
+                if ~pivMerdfPRED[listmods[i]].isnull().all():                
+                    pivMerdfPRED[listmods[i]].dropna().plot(color=(colors[i].tolist()[0],
+                                                      colors[i].tolist()[1],
+                                                      colors[i].tolist()[2]),
+                                              marker='o')
+
+        plt.legend(loc=(1.04,0),labelspacing=.9)
+        plt.title(selectmodel+' models')
+        plt.ylabel('Score for ' + titlelabel)
+        plt.xlabel('Target End Date')
+        plt.ylim([pivMerdfPRED.min().min()-1, pivMerdfPRED.max().max()+1])
+        plt.xlim([dateticks[0],dateticks[-1]])
+        custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
+        plt.xticks(dateticks,custom_tick_labels)
+        plt.xticks(rotation=45)
+        plt.savefig(figuresdirectory+'/'+filelabel+'_wk_'+str(numweeks)+selectmodel+'models.svg',
+                    dpi=300,bbox_inches = 'tight')   
     
         
 def plotgroupsFD(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame, 
