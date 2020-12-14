@@ -161,14 +161,14 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
                 dpi=300)    
     plt.show(fig)
         
-def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod,figuresdirectory) -> None:
+def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmodlist,figuresdirectory) -> None:
     """Plots select model predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
         Scoreboard (pd.DataFrame): The scoreboard dataframe
         scoretype (str): "Cases" or "Deaths"
         WeeksAhead (int): Forecasts from how many weeks ahead
-        curmod (str): Name of the model whose forecast will be shown
+        curmodlist (list): List of name of the model whose forecast will be shown
     Returns:
         None 
     """    
@@ -178,20 +178,22 @@ def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod,figuresdirect
     Scoreboardx.reset_index(inplace=True)  
     plt.figure(num=None, figsize=(14, 8), dpi=80, facecolor='w', edgecolor='k')
     models = Scoreboardx['model'].unique()
-    colors = pl.cm.jet(np.linspace(0,1,len(models)))
+    colors = pl.cm.jet(np.linspace(0,1,len(curmodlist)))
     i = 0
+    
+    for curmod in curmodlist:
+        dates = Scoreboardx[Scoreboardx['model']==curmod].target_end_date
+        PE = Scoreboardx[Scoreboardx['model']==curmod].PE
+        CIlow = Scoreboardx[Scoreboardx['model']==curmod].CILO
+        CIhi = Scoreboardx[Scoreboardx['model']==curmod].CIHI
 
-    dates = Scoreboardx[Scoreboardx['model']==curmod].target_end_date
-    PE = Scoreboardx[Scoreboardx['model']==curmod].PE
-    CIlow = Scoreboardx[Scoreboardx['model']==curmod].CILO
-    CIhi = Scoreboardx[Scoreboardx['model']==curmod].CIHI
+        modcol = (colors[i].tolist()[0],
+                  colors[i].tolist()[1],
+                  colors[i].tolist()[2])
 
-    modcol = (colors[i].tolist()[0],
-              colors[i].tolist()[1],
-              colors[i].tolist()[2])
-
-    plt.plot(dates,PE,color=modcol,label=curmod)
-    plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)
+        plt.plot(dates,PE,color=modcol,label=curmod)
+        plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)
+        i = i+1
 
     plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
     plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
@@ -200,8 +202,9 @@ def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmod,figuresdirect
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.title(curmod+': '+str(WeeksAhead)+'-week-ahead Forecasts')
-    plt.savefig(figuresdirectory+'/'+scoretype+'_'+curmod+'_'+str(WeeksAhead)+'wk.svg', 
+    plt.title(str(WeeksAhead)+'-week-ahead Forecasts')
+    plt.legend(loc="upper left",labelspacing=.9)
+    plt.savefig(figuresdirectory+'/'+scoretype+'_'+''.join(curmodlist)+'_'+str(WeeksAhead)+'wk.svg', 
                 bbox_inches = 'tight',
                 dpi=300)        
 
@@ -240,7 +243,7 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
 
         MerdfPRED = Scoreboardx.copy()   
         MerdfPRED = (MerdfPRED.groupby(['target_end_date'],
-                                       as_index=False)[['CILO','PE','CIHI']].agg(lambda x: np.mean(x)))
+                                       as_index=False)[['CILO','PE','CIHI']].agg(lambda x: np.median(x)))
 
         dates = MerdfPRED['target_end_date']
         PE = MerdfPRED['PE']
@@ -250,9 +253,11 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
         modcol = (colors[i].tolist()[0],
                   colors[i].tolist()[1],
                   colors[i].tolist()[2])
-
-        plt.plot(dates,PE,color=modcol,label=str(i)+ ' weeks-ahead')
-        #plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)        
+        if i == 1:
+            plt.plot(dates,PE,color=modcol,label=str(i)+ ' week ahead')
+            #plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)
+        else:
+            plt.plot(dates,PE,color=modcol,label=str(i)+ ' weeks ahead')
 
     plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
     plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.1])
@@ -279,7 +284,7 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
 
         MerdfPRED = Scoreboardx.copy()   
         MerdfPRED = (MerdfPRED.groupby(['target_end_date'],
-                                       as_index=False)[['score']].agg(lambda x: np.nanmean(x)))
+                                       as_index=False)[['score']].agg(lambda x: np.median(x)))
 
         dates = MerdfPRED['target_end_date']
         scores = MerdfPRED['score']
@@ -287,10 +292,12 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
         modcol = (colors[i].tolist()[0],
                   colors[i].tolist()[1],
                   colors[i].tolist()[2])
+        if i == 1:
+            plt.plot(dates,scores,color=modcol,label=str(i)+ ' week ahead')
+        else:
+            plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks ahead')
 
-        plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks-ahead')
-
-    plt.ylabel('Average Scores for US '+titlelabel, fontsize=18)
+    plt.ylabel('Median of Forecast Scores for US '+titlelabel, fontsize=18)
     plt.xlabel('Target End Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
@@ -310,7 +317,8 @@ def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead,figuresdirectory)
         WeeksAhead (int): Forecasts from how many weeks ahead
     Returns:
         None 
-    """    
+    """
+    
     scoretypes = ['Cases', 'Deaths']
     if scoretype not in scoretypes:
         raise ValueError("Invalid sim type. Expected one of: %s" % scoretypes)  
@@ -353,7 +361,7 @@ def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead,figuresdirectory)
     plt.savefig(figuresdirectory+'/'+scoretype+'_All.svg',
                 dpi=300,bbox_inches = 'tight')    
 
-def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None:
+def plotgroupsTD(Scoreboardx, modeltypes, figuresdirectory, model_target) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
         Scoreboard (pd.DataFrame): Scoreboard
@@ -362,8 +370,9 @@ def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None
         model_target (str): 'Case' or 'Death'
     Returns:
         None 
-    """        
-    
+    """
+    Scoreboard = Scoreboardx.copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
         raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
@@ -407,7 +416,7 @@ def plotgroupsTD(Scoreboard, modeltypes, figuresdirectory, model_target) -> None
                     dpi=300,bbox_inches = 'tight')
 
 
-def plotgroupsmodelweek(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame, 
+def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame, 
                figuresdirectory: str, numweeks: int, model_target: str) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
@@ -418,8 +427,9 @@ def plotgroupsmodelweek(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame,
         model_target (str): 'Case' or 'Death'
     Returns:
         None 
-    """    
-
+    """
+    Scoreboard = Scoreboardx.copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
         raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
@@ -493,7 +503,7 @@ def plotgroupsmodelweek(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame,
                     dpi=300,bbox_inches = 'tight')   
     
         
-def plotgroupsFD(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame, 
+def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame, 
                figuresdirectory: str, numweeks: int, model_target: str) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
@@ -504,8 +514,9 @@ def plotgroupsFD(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame,
         model_target (str): 'Case' or 'Death'
     Returns:
         None 
-    """    
-
+    """
+    Scoreboard = Scoreboardx.copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
         raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
@@ -538,7 +549,7 @@ def plotgroupsFD(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame,
                                               marker='o')
 
         plt.legend(loc=(1.04,0),labelspacing=.9)
-        plt.title(selectmodel+' models: '+ str(numweeks) +' wk ahead Scores')
+        plt.title(selectmodel+' models: '+ str(numweeks) +' week ahead Scores')
             
         plt.ylabel('Score for '+str(numweeks)+' wk ahead '+titlelabel)
         plt.xlabel('Forecast Date')
@@ -552,8 +563,10 @@ def plotgroupsFD(Scoreboard: pd.DataFrame, modeltypes: pd.DataFrame,
                    bbox_inches = 'tight')        
         
         
-def plotscoresvstimeW(Scoreboard,Weeks):
+def plotscoresvstimeW(Scoreboardx,Weeks):
     plt.figure()
+    Scoreboard = Scoreboardx.copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
     rslt_df = Scoreboard.loc[Scoreboard['deltaW'] == Weeks] 
     df = rslt_df.pivot(index='forecast_date', columns='model', values='score')
     df = df.astype(float)
@@ -569,8 +582,10 @@ def plotscoresvstimeW(Scoreboard,Weeks):
     plt.xlabel('Date Forecast Made')        
     
     
-def plotscoresvstime(Scoreboard,Days):
+def plotscoresvstime(Scoreboardx,Days):
     plt.figure()
+    Scoreboard = Scoreboardx.copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
     rslt_df = Scoreboard.loc[Scoreboard['delta'] == Days] 
     df = rslt_df.pivot(index='forecast_date', columns='model', values='score')
     df = df.astype(float)

@@ -25,8 +25,8 @@ Covid19Sim:Simulator
 USACE:ERDC_SEIR
 SWC:TerminusCM
 Auquan:SEIR
-CovidActNow:SEIR_CAN
 OliverWyman:Navigator
+CovidActNow:SEIR_CAN
 epiforecasts:ensemble1
 NotreDame:mobility
 MITCovAlliance:SIR
@@ -50,3 +50,5 @@ JHU_CSSE:DECOM
 USC:SI_kJalpha_RF
 JCB:PRM
 USC:SI_kJalpha
+MIT_CritData:GBCF
+Microsoft:DeepSTIA

@@ -8,67 +8,85 @@ from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 import os
 
-def giveweightsformodels(Scoreboardx,datecut,weekcut):
+def getleaderboard(Scoreboard,WeeksAhead):
+    
+    Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+    
+    scoresframe = (Scoreboard4.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
+    scoresframe.reset_index(inplace=True,drop=True)
+    scoresframe = scoresframe.rename(columns={'score':'median of past scores'})    
+    
+    ranksframe = (Scoreboard4.groupby(['model'],as_index=False)[['rank']].agg(lambda x: np.mean(x))).sort_values(by=['rank'], ascending=True)    
+    ranksframe.reset_index(inplace=True,drop=True)
+    ranksframe = ranksframe.rename(columns={'rank':'average of past rankings'})
+    
+    leaderboard = scoresframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
+    
+    auxstr = 'as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
+    if 'cases' in Scoreboard.columns:
+        print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
+    else:
+        print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
+    
+    return leaderboard
+
+def giveweightsformodels(Scoreboardx,datepred,weekcut):
     #str datecut e.g. '2020-07-01'
     #Make sure we take only one prediction per model
     
-    datecut = datetime.strptime(datecut,'%Y-%m-%d') - timedelta(days=weekcut*7)    
+    datecut = datetime.strptime(datepred,'%Y-%m-%d') - timedelta(days=(weekcut-1)*7)    
     
     Scoreboard = Scoreboardx[Scoreboardx['deltaW']==weekcut].copy()
     
     Scoreboardearly = Scoreboard[Scoreboard['target_end_date']<datecut].copy()
 
-    Scoreboardearly.dropna(subset=['score'],inplace=True)
+    #Scoreboardearly.dropna(subset=['score'],inplace=True)
     Scoreboardearly.reset_index(inplace=True)    
     
     listofavailablemodels = Scoreboardearly['model'].unique().tolist()
     
-    scoresframe = (Scoreboardearly.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.nanmean(x))).sort_values(by=['score'], ascending=False)
+    scoresframe = (Scoreboardearly.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
     scoresframe.reset_index(inplace=True,drop=True)
     scoresframe = scoresframe.rename(columns={'score':'pastscores'})
     
+#     ranksframe = (Scoreboardearly.groupby(['model'],as_index=False)[['rank']].agg(lambda x: np.mean(x))).sort_values(by=['rank'], ascending=False)    
+#     ranksframe.reset_index(inplace=True,drop=True)
+#     ranksframe = ranksframe.rename(columns={'rank':'pastranks'})    
+    
     return (scoresframe,listofavailablemodels,Scoreboardearly)
 
-def givescoreweightedforecast(Scoreboard,case):
-
-    if case=='Cases':
-        mylist = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
-    elif case=='Deaths':
-        mylist = [0.01,0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
-         0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99]
-        
-    vso = [0] * len(mylist)
-
-    for Index in tqdm(range(0,len(Scoreboard))):    
-
-        qs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('quantile')]
-        vs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('value')]
-        wmodel = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('weights')]
-
-        for i in mylist:
-            loc = qs.index(i)
-            vso[loc] += wmodel * vs[loc]
-
-        qso = mylist
-        
-    return (qso,vso)
-
-def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case,runtype):
+def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
+    """Generates all model weighted/unweighted ensembles
+    Args:
+        scoreboardx (pd.DataFrame): The scoreboard
+        datepred (str): Start date on which first ensemble will be formed
+        case (str): 'Case' or 'Death'
+        weekcut (int): number of weeks ahead forecast ensemble formation
+        runtype (str): weighted or unweighted ensemble
+    Returns:
+        scoreboard (pd.DataFrame): scoreboard with the added ensemble for nwk
+    """     
     #str datecut e.g. '2020-07-01'
     #Make sure we take only one prediction per model
     
+    Scoreboard = Scoreboardx.copy() 
+    
     datepredindate = datetime.strptime(datepred,'%Y-%m-%d')
-    datecut = datepredindate - timedelta(days=weekcut*7)  
+    datecut = datepredindate - timedelta(days=(weekcut-1)*7)  
 
     [scoresframe,listofavailablemodels,Scoreboardearly] = giveweightsformodels(Scoreboard,datepred,weekcut)
     predday = Scoreboard[(Scoreboard['target_end_date']==datepred)&(Scoreboard['deltaW']==weekcut)].copy()
-    
-    predday.drop(predday[predday['model'] == 'COVIDhub:ensemble'].index, inplace = True) 
+
+#     #We exclude COVIDhub:ensemble from our own ensemble as we know it is an ensemble of the models here
+#     predday.drop(predday[predday['model'] == 'COVIDhub:ensemble'].index, inplace = True)
+    predday.drop(predday[predday['model'] == 'FDANIH:Sweight'].index, inplace = True) 
+    predday.drop(predday[predday['model'] == 'FDANIH:Sunweight'].index, inplace = True) 
     
     preddaymerged = predday.merge(scoresframe, left_on=['model'], right_on=['model']).copy()
+    #preddaymerged = tempframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
     
     if runtype=='weighted':
-        preddaymerged['weights'] = np.exp(preddaymerged['pastscores']/2)
+        preddaymerged['weights'] = np.exp(preddaymerged['pastscores'].astype(np.float64)/2)
         modelname='FDANIH:Sweight'
     elif runtype=='unweighted':
         preddaymerged['weights'] = 1
@@ -119,19 +137,62 @@ def getscoresforweightedmodels(Scoreboard,datepred,weekcut,case,runtype):
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('sumpdf')] = result[1]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('prange')] = result[2]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('p')] = result[3]
+    
+    #leaderboard = preddaymerged[['model', 'deltaW', 'pastscores', 'pastranks','weights']].copy()
+    #leaderboard['datecut'] = datecut
+    #leaderboard['target_end_date'] = datepred
+        
+    return Scoreboard
 
-        return Scoreboard
 
+def givescoreweightedforecast(Scoreboardx,case):
 
-def getweightedmodelalldates(scoreboard,startdate,case,nwk,runtype):
+    Scoreboard = Scoreboardx.copy()
+    if case=='Cases':
+        mylist = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
+    elif case=='Deaths':
+        mylist = [0.01,0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
+         0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99]
+        
+    vso = [0] * len(mylist)
+
+    for Index in range(0,len(Scoreboard)):    
+
+        qs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('quantile')]
+        vs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('value')]
+        wmodel = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('weights')]
+
+        for i in mylist:
+            loc = qs.index(i)
+            vso[loc] += wmodel * vs[loc]
+
+        qso = mylist
+        
+    return (qso,vso)
+
+def getweightedmodelalldates(scoreboardx,startdate,case,nwk,runtype):
+    """Generates all model weighted/unweighted ensembles for an nwk
+    Args:
+        scoreboardx (pd.DataFrame): The scoreboard
+        startdate (str): Start date on which first ensemble will be formed
+        case (str): 'Case' or 'Death'
+        nwk (int): number of weeks ahead forecast ensemble formation
+        runtype (str): weighted or unweighted ensemble
+    Returns:
+        scoreboard (pd.DataFrame): scoreboard with the added ensemble for nwk
+    """        
     #e.g. startdate '2020-08-01'
     #case e.g. Cases or Deaths
+    scoreboard = scoreboardx.copy()
+    #cumleaderboard = pd.DataFrame(columns = ['model', 'deltaW', 'pastscores', 'pastranks','weights', 'datecut', 'target_end_date'])
     daterange = pd.date_range(start=startdate, end=pd.to_datetime('today'),freq='W-SAT')
     for datepred in daterange:    
-        scoreboard = getscoresforweightedmodels(scoreboard,datepred.strftime('%Y-%m-%d'),nwk,case,runtype)
+        #(scoreboard,leaderboard) = getscoresforweightedmodels(scoreboard,datepred.strftime('%Y-%m-%d'),nwk,case,runtype)
+        #cumleaderboard = pd.concat([cumleaderboard, leaderboard], sort=False)
+        scoreboard = getscoresforweightedmodels(scoreboard,datepred.strftime('%Y-%m-%d'),nwk,case,runtype)   
         
+    #cumleaderboard.reset_index(inplace=True,drop=True)
     return scoreboard
-
 
 def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> pd.DataFrame:
     """Generates primary scores for all model competition entries
@@ -215,11 +276,11 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     Scoreboard['CILO']=pd.DataFrame(Scoreboard['value'].to_list()).min(axis=1)
     Scoreboard['PE']=pd.DataFrame(Scoreboard['value'].to_list()).median(axis=1)
     
-    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
+    #Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
     #Scoreboard.dropna(inplace=True)
     Scoreboardx = Scoreboard.sort_values('forecast_date').drop_duplicates(subset=['model', 'target_end_date','deltaW'], keep='last').copy()
     Scoreboardx.reset_index(drop=True,inplace=True)
-    Scoreboardx['scorecontr']=np.exp(-Scoreboardx['score']/2)
+    Scoreboardx['scorecontr']=np.exp(Scoreboardx['score'].astype(np.float64)/2)
     
     Scoreboardx.to_pickle(otpfile)
     
@@ -395,11 +456,11 @@ def givePivotScoreFORECAST(Scoreboard,modeltypes) -> tuple:
     MerdfPRED.replace([np.inf, -np.inf], np.nan,inplace=True)
     MerdfPRED = (MerdfPRED.groupby(['model','modeltype','forecast_date'],
                                             as_index=False)[['delta','score']].agg(lambda x: list(x)))
-    MerdfPRED.dropna(subset=['score'],inplace=True)
-    MerdfPRED['nanmean'] = MerdfPRED.apply(lambda row : np.nanmean(row['score']), axis = 1) 
+    #MerdfPRED.dropna(subset=['score'],inplace=True)
+    MerdfPRED['median'] = MerdfPRED.apply(lambda row : np.median(row['score']), axis = 1) 
     MerdfPRED['nanstd'] = MerdfPRED.apply(lambda row : np.nanstd(row['score']), axis = 1) 
     
-    pivMerdfPRED = MerdfPRED.pivot(index='forecast_date', columns='model', values='nanmean')
+    pivMerdfPRED = MerdfPRED.pivot(index='forecast_date', columns='model', values='median')
     
     return (MerdfPRED,pivMerdfPRED)
 
@@ -423,10 +484,10 @@ def givePivotScoreTARGET(Scoreboard,modeltypes) -> tuple:
     MerdfPRED.replace([np.inf, -np.inf], np.nan,inplace=True)
     MerdfPRED = (MerdfPRED.groupby(['model','modeltype','target_end_date'],
                                             as_index=False)[['delta','score']].agg(lambda x: list(x)))
-    MerdfPRED.dropna(subset=['score'],inplace=True)
-    MerdfPRED['nanmean'] = MerdfPRED.apply(lambda row : np.nanmean(row['score']), axis = 1) 
+    #MerdfPRED.dropna(subset=['score'],inplace=True)
+    MerdfPRED['median'] = MerdfPRED.apply(lambda row : np.median(row['score']), axis = 1) 
     MerdfPRED['nanstd'] = MerdfPRED.apply(lambda row : np.nanstd(row['score']), axis = 1) 
     
-    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='nanmean') 
+    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
     
     return (MerdfPRED,pivMerdfPRED)
