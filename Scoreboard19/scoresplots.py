@@ -2,6 +2,7 @@
 
 import scipy.interpolate
 import pandas as pd
+from pathlib import Path
 import numpy as np
 from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
@@ -9,10 +10,23 @@ import matplotlib.ticker as ticker
 import matplotlib.pylab as pl
 import matplotlib.dates as mdates
 from .scores import *
+from .__init__ import figures_dir, data_dir
 import os
 
-def plotdifferencescdfpdf(Scoreboard,model_target,figuresdirectory):
-    
+
+def save_figures(name):
+    global figures_dir
+    figures_dir = Path(figures_dir)
+    (figures_dir / name).parent.mkdir(parents=True, exist_ok=True)  # Create all necessary parent dirs
+    plt.savefig(figures_dir / (name + '.png'), 
+                bbox_inches = 'tight',
+                dpi=300)
+    plt.savefig(figures_dir / (name + '.svg'), 
+                bbox_inches = 'tight',
+                dpi=300)
+
+
+def plotdifferencescdfpdf(Scoreboard, model_target):
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
         raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
@@ -29,35 +43,25 @@ def plotdifferencescdfpdf(Scoreboard,model_target,figuresdirectory):
     print('===========================')
     print('Maximum % conversion error:')
     print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
-    plt.savefig(figuresdirectory+'/'+model_target+'_'+'diffcdfpdf.svg',
-            bbox_inches = 'tight',
-            dpi=300)    
+    save_figures(model_target+'_diffcdfpdf') 
 
-def plotUSCumDeaths(US_deaths,figuresdirectory) -> None:
+
+def plotUSCumDeaths(US_deaths) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
     plt.plot(US_deaths.DateObserved,US_deaths.Deaths)
     plt.xticks(rotation=45)
     plt.title('US Cumulative Deaths')
     plt.ylabel('Deaths')
-    plt.savefig(figuresdirectory+'/USDeaths.png', 
-                bbox_inches = 'tight',
-                dpi=300) 
-    plt.savefig(figuresdirectory+'/USDeaths.svg', 
-                bbox_inches = 'tight',
-                dpi=300)     
+    save_figures('USDeaths')   
+
     
-def plotUSIncCases(US_cases,figuresdirectory) -> None:
+def plotUSIncCases(US_cases) -> None:
     plt.figure(figsize=(4, 2.5), dpi=180, facecolor='w', edgecolor='k')
     plt.plot(US_cases.DateObserved,US_cases.Cases)
     plt.xticks(rotation=45)
     plt.title('US Weekly Incidental Cases')
     plt.ylabel('Cases')
-    plt.savefig(figuresdirectory+'/USCases.png', 
-                bbox_inches = 'tight',
-                dpi=300)
-    plt.savefig(figuresdirectory+'/USCases.svg', 
-                bbox_inches = 'tight',
-                dpi=300)    
+    save_figures('USCases')   
 
 def perdelta(start, end, delta):
     """Generate a list of datetimes in an 
@@ -74,8 +78,9 @@ def perdelta(start, end, delta):
     while curr < end:
         yield curr
         curr += delta
+    
 
-def numberofteamsincovidhub(FirstForecasts,figuresdirectory)->None:
+def numberofteamsincovidhub(FirstForecasts, figures_dir)->None:
     fig = plt.figure(num=None, figsize=(6, 4), dpi=120, facecolor='w', edgecolor='k')
     FirstForecasts['forecast_date']= pd.to_datetime(FirstForecasts['forecast_date'])
     plt.plot(FirstForecasts['forecast_date'],FirstForecasts['cumnumteams'])
@@ -84,16 +89,11 @@ def numberofteamsincovidhub(FirstForecasts,figuresdirectory)->None:
     plt.xlabel('First Date of Entry')
     plt.title('Number of Teams in Covid-19 Forecast Hub Increases')
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.savefig(figuresdirectory+'/numberofmodels.png', 
-                bbox_inches = 'tight',
-                dpi=300)
-    plt.savefig(figuresdirectory+'/numberofmodels.svg', 
-            bbox_inches = 'tight',
-            dpi=300)
-    plt.show(fig)
-        
-def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     
+    plt.show(fig)
+
+
+def plotallscoresdist(Scoreboard, model_target) -> None:
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
         raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
@@ -109,24 +109,14 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     Scoreboard.plot.scatter(x='delta', y='score', marker='.')
     plt.xlabel('N-Days Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
-    plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Days_Forward_Forecast.png',
-                bbox_inches = 'tight',
-                dpi=300)
-    plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Days_Forward_Forecast.svg',
-                bbox_inches = 'tight',
-                dpi=300)    
+    save_figures(filelabel+'_ScoreVSx-Days_Forward_Forecast')   
     plt.show(fig)
 
     fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
     Scoreboard.plot.scatter(x='deltaW', y='score', marker='.')
     plt.xlabel('N-Weeks Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
-    plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Weeks_Forward_Forecast.png', 
-                bbox_inches = 'tight',
-                dpi=300)
-    plt.savefig(figuresdirectory+'/'+filelabel+'_'+'ScoreVSx-Weeks_Forward_Forecast.svg', 
-                bbox_inches = 'tight',
-                dpi=300)    
+    save_figures(filelabel+'_ScoreVSx-Weeks_Forward_Forecast') 
     plt.show(fig)
     
     fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
@@ -139,9 +129,7 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     plt.xticks(np.arange(min(Scoreboard.delta), max(Scoreboard.delta)+1, 2.0))
     plt.xticks(rotation=90)
     plt.grid(b=None)
-    plt.savefig(figuresdirectory+'/'+filelabel+'_x-Days_Forward_Forecast_Hist.png', 
-                bbox_inches = 'tight',
-                dpi=300)
+    save_figures(filelabel+'_x-Days_Forward_Forecast_Hist') 
     plt.show(fig)
 
     fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
@@ -153,15 +141,12 @@ def plotallscoresdist(Scoreboard,figuresdirectory,model_target) -> None:
     plt.xticks(np.arange(min(Scoreboard.deltaW), max(Scoreboard.deltaW)+1, 1.0))
     plt.xticks(rotation=90)
     plt.grid(b=None)
-    plt.savefig(figuresdirectory+'/'+filelabel+'_x-Weeks_Forward_Forecast_Hist.png', 
-                bbox_inches = 'tight',
-                dpi=300)
-    plt.savefig(figuresdirectory+'/'+filelabel+'_x-Weeks_Forward_Forecast_Hist.svg', 
-                bbox_inches = 'tight',
-                dpi=300)    
+    save_figures(filelabel+'_x-Weeks_Forward_Forecast_Hist')
     plt.show(fig)
-        
-def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmodlist,figuresdirectory) -> None:
+    return 0
+
+
+def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> None:
     """Plots select model predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
@@ -204,11 +189,10 @@ def plotlongitudinal(Actual,Scoreboard,scoretype,WeeksAhead,curmodlist,figuresdi
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.title(str(WeeksAhead)+'-week-ahead Forecasts')
     plt.legend(loc="upper left",labelspacing=.9)
-    plt.savefig(figuresdirectory+'/'+scoretype+'_'+''.join(curmodlist)+'_'+str(WeeksAhead)+'wk.svg', 
-                bbox_inches = 'tight',
-                dpi=300)        
+    save_figures(scoretype+'_'+''.join(curmodlist)+'_'+str(WeeksAhead)+'wk')
+    
 
-def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirectory) -> None:
+def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks) -> None:
     """Plots select model predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
@@ -269,8 +253,7 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
     #plt.title(labelp, fontsize=18)
     plt.legend(loc="upper left",labelspacing=.9)
     lims = plt.gca().get_xlim()
-    plt.savefig(figuresdirectory+'/'+scoretype+'_Forecasts.svg',
-                dpi=300,bbox_inches = 'tight')    
+    save_figures(scoretype+'_Forecasts.svg')    
 
     plt.figure(num=None, figsize=(10, 8), dpi=80, facecolor='w', edgecolor='k')
     i = 0
@@ -305,10 +288,10 @@ def plotlongitudinalUNWEIGHTED(Actual,Scoreboard,scoretype,numweeks,figuresdirec
     #plt.title('Scores for '+labelp, fontsize=18)
     plt.legend(loc="upper left",labelspacing=.9)
     plt.gca().set_xlim(xmin=lims[0], xmax=lims[1])
-    plt.savefig(figuresdirectory+'/'+scoretype+'_Average_Forward_Scores.svg',
-                dpi=300,bbox_inches = 'tight')
+    save_figures(scoretype+'_Average_Forward_Scores.svg')
 
-def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead,figuresdirectory) -> None:
+
+def plotlongitudinalALL(Actual, Scoreboard, scoretype, WeeksAhead) -> None:
     """Plots all predictions against actual data longitudinally
     Args:
         Actual (pd.DataFrame): The actual data
@@ -358,15 +341,14 @@ def plotlongitudinalALL(Actual,Scoreboard,scoretype,WeeksAhead,figuresdirectory)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     plt.title(str(WeeksAhead)+'-week-ahead Forecasts', fontsize=18)
-    plt.savefig(figuresdirectory+'/'+scoretype+'_All.svg',
-                dpi=300,bbox_inches = 'tight')    
+    save_figures(scoretype+'_All')    
 
-def plotgroupsTD(Scoreboardx, modeltypes, figuresdirectory, model_target) -> None:
+
+def plotgroupsTD(Scoreboardx, modeltypes, model_target) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
         Scoreboard (pd.DataFrame): Scoreboard
         modeltypes (pd.DataFrame): End date.
-        figuresdirectory (str): Directory to save in
         model_target (str): 'Case' or 'Death'
     Returns:
         None 
@@ -412,17 +394,15 @@ def plotgroupsTD(Scoreboardx, modeltypes, figuresdirectory, model_target) -> Non
         custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
-        plt.savefig(figuresdirectory+'/'+filelabel+'_Average_Forward_Scores_'+selectmodel+'models.svg',
-                    dpi=300,bbox_inches = 'tight')
+        save_figures(filelabel+'_Average_Forward_Scores_'+selectmodel+'models')
 
 
 def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame, 
-               figuresdirectory: str, numweeks: int, model_target: str) -> None:
+                        numweeks: int, model_target: str) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
         pivMerdfPRED (pd.DataFrame): Start date.
         modeltypes (pd.DataFrame): model types
-        figuresdirectory (str): direcotry to save in
         numweeks (int): number of weeks ahead forecast
         model_target (str): 'Case' or 'Death'
     Returns:
@@ -471,8 +451,7 @@ def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
     custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
     plt.xticks(dateticks,custom_tick_labels)
     plt.xticks(rotation=45)
-    plt.savefig(figuresdirectory+'/'+filelabel+'_Model_averaged_scores_wk'+str(numweeks)+'models.svg',
-                dpi=300,bbox_inches = 'tight')
+    save_figures(filelabel+'_Model_averaged_scores_wk'+str(numweeks)+'models')
     
     dateticks = list(perdelta(pivMerdfPRED.index[0] - timedelta(days=14), 
                           pivMerdfPRED.index[-1] + timedelta(days=14), 
@@ -499,17 +478,15 @@ def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
-        plt.savefig(figuresdirectory+'/'+filelabel+'_wk_'+str(numweeks)+selectmodel+'models.svg',
-                    dpi=300,bbox_inches = 'tight')   
+        save_figures(filelabel+'_wk_'+str(numweeks)+selectmodel+'models')   
     
         
 def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame, 
-               figuresdirectory: str, numweeks: int, model_target: str) -> None:
+                 numweeks: int, model_target: str) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
         pivMerdfPRED (pd.DataFrame): Start date.
         modeltypes (pd.DataFrame): model types
-        figuresdirectory (str): direcotry to save in
         numweeks (int): number of weeks ahead forecast
         model_target (str): 'Case' or 'Death'
     Returns:
@@ -558,12 +535,10 @@ def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
-        plt.savefig(figuresdirectory+'/'+str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models.svg',
-                    dpi=300,
-                   bbox_inches = 'tight')        
+        save_figures(str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models')        
         
         
-def plotscoresvstimeW(Scoreboardx,Weeks):
+def plotscoresvstimeW(Scoreboardx, Weeks):
     plt.figure()
     Scoreboard = Scoreboardx.copy()
     Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
@@ -582,7 +557,7 @@ def plotscoresvstimeW(Scoreboardx,Weeks):
     plt.xlabel('Date Forecast Made')        
     
     
-def plotscoresvstime(Scoreboardx,Days):
+def plotscoresvstime(Scoreboardx, Days):
     plt.figure()
     Scoreboard = Scoreboardx.copy()
     Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
