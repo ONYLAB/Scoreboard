@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 import os
 
-def getleaderboard(Scoreboard,WeeksAhead):
+def getleaderboard(Scoreboard,WeeksAhead,leaderboardin):
     
     Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     
@@ -22,11 +22,18 @@ def getleaderboard(Scoreboard,WeeksAhead):
     
     leaderboard = scoresframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
     
-    auxstr = 'as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
+    leaderboard['deltaW'] = WeeksAhead
+    
+    auxstr = ' as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
     if 'cases' in Scoreboard.columns:
         print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
+        leaderboard['forecasttype'] = 'cases'
     else:
         print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
+        leaderboard['forecasttype'] = 'deaths'
+        
+    leaderboard['asofdate'] = Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')    
+    leaderboard = pd.concat([leaderboardin, leaderboard], sort=False)
     
     return leaderboard
 

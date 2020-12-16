@@ -540,7 +540,60 @@ def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
-        save_figures(str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models')        
+        save_figures(str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models')
+        
+        
+def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
+    """Generates modeltype-based score plots in time (Forecast Date)
+    Args:
+        Scoreboard (pd.DataFrame): Scoreboard
+    Returns:
+        None 
+    """
+    Scoreboard = Scoreboardx[Scoreboardx['deltaW']==WeeksAhead].copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
+
+    if 'cases' in Scoreboardx.columns:
+        filelabel = 'INCCASE'
+        titlelabel= 'weekly incidental cases'
+    else:
+        filelabel = 'CUMDEATH'
+        titlelabel= 'cumulative deaths'        
+    
+    
+    MerdfPRED = Scoreboard.copy()
+    MerdfPRED = (MerdfPRED.groupby(['model','target_end_date'],
+                                            as_index=False)[['delta','score']].agg(lambda x: list(x)))
+    #MerdfPRED.dropna(subset=['score'],inplace=True)
+    MerdfPRED['median'] = MerdfPRED.apply(lambda row : np.median(row['score']), axis = 1) 
+    MerdfPRED['nanstd'] = MerdfPRED.apply(lambda row : np.nanstd(row['score']), axis = 1) 
+    
+    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
+    
+    dateticks = list(perdelta(pivMerdfPRED.index[0] - timedelta(days=14), 
+                              pivMerdfPRED.index[-1] + timedelta(days=14), 
+                              timedelta(days=7)))
+
+    colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
+    plt.figure(figsize=(12, 6), dpi=180, facecolor='w', edgecolor='k')
+
+    for i in range(len(listmods)):
+        if listmods[i] in pivMerdfPRED.columns:
+            if ~pivMerdfPRED[listmods[i]].isnull().all():                
+                pivMerdfPRED[listmods[i]].dropna().plot(color=(colors[i].tolist()[0],
+                                                  colors[i].tolist()[1],
+                                                  colors[i].tolist()[2]),
+                                          marker='o')
+
+    plt.legend(loc=(1.04,0),labelspacing=.9,fontsize=16)
+    plt.title(str(WeeksAhead)+'-week-ahead Scores',fontsize=18)
+    plt.ylabel('Scores for ' + titlelabel,fontsize=18)
+    plt.xlabel('Target End Date',fontsize=18)
+    plt.ylim([pivMerdfPRED.min().min()-1, pivMerdfPRED.max().max()+1])
+    plt.xlim([dateticks[0],dateticks[-1]])
+    custom_tick_labels = map(lambda x: x.strftime('%b %d'), dateticks)
+    plt.xticks(dateticks,custom_tick_labels)
+    plt.xticks(rotation=45)        
         
         
 def plotscoresvstimeW(Scoreboardx, Weeks):
