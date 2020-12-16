@@ -161,7 +161,7 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     Scoreboardx.sort_values('target_end_date',inplace=True)
     Scoreboardx.reset_index(inplace=True)  
-    plt.figure(num=None, figsize=(14, 8), dpi=80, facecolor='w', edgecolor='k')
+    plt.figure(num=None, figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
     models = Scoreboardx['model'].unique()
     colors = pl.cm.jet(np.linspace(0,1,len(curmodlist)))
     i = 0
@@ -187,8 +187,9 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    plt.title(str(WeeksAhead)+'-week-ahead Forecasts')
-    plt.legend(loc="upper left",labelspacing=.9)
+    plt.title(str(WeeksAhead)+'-week-ahead Forecasts', fontsize=18)
+    plt.legend(loc="upper left",labelspacing=.9, fontsize=16)
+
     save_figures(scoretype+'_'+''.join(curmodlist)+'_'+str(WeeksAhead)+'wk')
     
 
@@ -215,7 +216,7 @@ def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks) -> None:
     numweeks += 1
     labelp = 'Average Unweighted Forecasts'
     colors = pl.cm.jet(np.linspace(0,1,numweeks))
-    plt.figure(num=None, figsize=(10, 8), dpi=80, facecolor='w', edgecolor='k')
+    plt.figure(num=None, figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
     i = 0
     
     for WeeksAhead in range(1, numweeks):    
@@ -250,12 +251,12 @@ def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks) -> None:
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
-    #plt.title(labelp, fontsize=18)
-    plt.legend(loc="upper left",labelspacing=.9)
+    plt.title('Medians of all forecast point estimates', fontsize=18)
+    plt.legend(loc="upper left",labelspacing=.9, fontsize=16)
     lims = plt.gca().get_xlim()
-    save_figures(scoretype+'_Forecasts.svg')    
+    save_figures(scoretype+'_Forecasts.svg')   
 
-    plt.figure(num=None, figsize=(10, 8), dpi=80, facecolor='w', edgecolor='k')
+    plt.figure(num=None, figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
     i = 0
     
     for WeeksAhead in range(1, numweeks):    
@@ -279,15 +280,19 @@ def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks) -> None:
             plt.plot(dates,scores,color=modcol,label=str(i)+ ' week ahead')
         else:
             plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks ahead')
-
-    plt.ylabel('Median of Forecast Scores for US '+titlelabel, fontsize=18)
+    
+    plt.title('US '+titlelabel, fontsize=18)
+    plt.ylabel('Median of Forecast Scores', fontsize=18)
     plt.xlabel('Target End Date', fontsize=18)
     plt.xticks(rotation=45, fontsize=13)
     plt.yticks(fontsize=13)
     plt.fmt_xdata = mdates.DateFormatter('%m-%d')
     #plt.title('Scores for '+labelp, fontsize=18)
-    plt.legend(loc="upper left",labelspacing=.9)
+    #plt.legend(loc="upper left",labelspacing=.9, fontsize=16)
     plt.gca().set_xlim(xmin=lims[0], xmax=lims[1])
+    plt.ylim([Scoreboard[Scoreboard['score']!=np.NINF].score.min(),
+              Scoreboard[Scoreboard['score']!=np.NINF].score.max()])
+
     save_figures(scoretype+'_Average_Forward_Scores.svg')
 
 
