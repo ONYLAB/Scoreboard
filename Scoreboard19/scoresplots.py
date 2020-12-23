@@ -26,7 +26,7 @@ def save_figures(name):
                 dpi=300)
 
 
-def plotdifferencescdfpdf(Scoreboard, model_target):
+def plotdifferencescdfpdf(Scoreboard, model_target, quiet=False):
     model_targets = ['Case', 'Death']
     if model_target not in model_targets:
         raise ValueError("Invalid sim type. Expected one of: %s" % model_targets)  
@@ -40,9 +40,10 @@ def plotdifferencescdfpdf(Scoreboard, model_target):
     plt.hist(Scoreboard['prange']-Scoreboard['sumpdf'],bins=50)
     plt.xlabel("Difference between integrated pdf and given cdf")
     plt.title('US COVID-19 ' + titlelabel)
-    print('===========================')
-    print('Maximum % conversion error:')
-    print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
+    if not quiet:
+        print('===========================')
+        print('Maximum % conversion error:')
+        print(100*max(Scoreboard['prange']-Scoreboard['sumpdf']))
     save_figures(model_target+'_diffcdfpdf') 
 
 

@@ -6,10 +6,20 @@ import pandas as pd
 import numpy as np
 from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
-import os
+"""Functions for preparing scores."""
 
-def getleaderboard(Scoreboard,WeeksAhead):
-    
+from tqdm import tqdm
+import scipy.interpolate
+import pandas as pd
+import numpy as np
+from datetime import date, datetime, timedelta
+import matplotlib.pyplot as plt
+import os
+import os
+from . import scoresplots, datagrab
+
+
+def getleaderboard(Scoreboard, WeeksAhead, quiet=False):
     Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     
     scoresframe = (Scoreboard4.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
@@ -23,14 +33,15 @@ def getleaderboard(Scoreboard,WeeksAhead):
     leaderboard = scoresframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
     
     auxstr = 'as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
-    if 'cases' in Scoreboard.columns:
-        print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
-    else:
-        print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
+    if not quiet:
+        if 'cases' in Scoreboard.columns:
+            print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
+        else:
+            print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
     
     return leaderboard
 
-def giveweightsformodels(Scoreboardx,datepred,weekcut):
+def giveweightsformodels(Scoreboardx, datepred, weekcut):
     #str datecut e.g. '2020-07-01'
     #Make sure we take only one prediction per model
     
@@ -170,7 +181,7 @@ def givescoreweightedforecast(Scoreboardx,case):
         
     return (qso,vso)
 
-def getweightedmodelalldates(scoreboardx,startdate,case,nwk,runtype):
+def getweightedmodelalldates(scoreboardx, startdate, case, nwk, runtype):
     """Generates all model weighted/unweighted ensembles for an nwk
     Args:
         scoreboardx (pd.DataFrame): The scoreboard
@@ -491,3 +502,17 @@ def givePivotScoreTARGET(Scoreboard,modeltypes) -> tuple:
     pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
     
     return (MerdfPRED,pivMerdfPRED)
+
+
+def fix_scoreboard(scoreboard, kind='Case', quiet=False, plot=True):
+    #Eliminate scores that do not have the proper score quantiles
+    delete_row = scoreboard[scoreboard["proper"]==False].index
+    scoreboard.drop(delete_row,inplace=True)
+    scoreboard.reset_index(drop=True, inplace=True)
+    if plot:
+        scoresplots.plotdifferencescdfpdf(scoreboard, kind, quiet=quiet)
+    modeltypesCases = datagrab.getmodeltypes(scoreboard, quiet=quiet)
+    #Get the weekly forecast score rankings
+    grouped =  scoreboard.groupby(['target_end_date','deltaW'])
+    scoreboard['rank'] = grouped['score'].transform(lambda x: pd.factorize(-x, sort=True)[0]+1)
+    return scoreboard

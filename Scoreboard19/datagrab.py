@@ -62,19 +62,20 @@ def readobservedcases(writetocsv: bool = False)-> pd.DataFrame:
         
     return WeeklyUS_cases
 
-def getmodeltypes(Scoreboard)-> pd.DataFrame:
-    
-    print('================================')
-    print('Unique models in the scoreboard:')
+
+def getmodeltypes(Scoreboard, quiet=False)-> pd.DataFrame:
     uniques = Scoreboard.model.unique()
-    for i in range(0,len(uniques)):
-        print(str(i)+'. '+uniques[i])
-    
     modeltypes = pd.read_csv('../Data/modeltypes.dat')
     modeltypes['model'] = modeltypes['model'].str.strip()
     modeltypes['modeltype'] = modeltypes['modeltype'].str.strip()
-    print('========================================================')
-    print("Models in the latest Scoreboard that are not yet in modeltypes.dat:")
-    print(np.setdiff1d(np.sort(Scoreboard.model.drop_duplicates()), modeltypes.model))
-    print("Edit modeltypes.dat accordingly")
+    
+    if not quiet:
+        print('================================')
+        print('Unique models in the scoreboard:')
+        for i in range(0,len(uniques)):
+            print(str(i)+'. '+uniques[i])
+        print('========================================================')
+        print("Models in the latest Scoreboard that are not yet in modeltypes.dat:")
+        print(np.setdiff1d(np.sort(Scoreboard.model.drop_duplicates()), modeltypes.model))
+        print("Edit modeltypes.dat accordingly")
     return modeltypes
