@@ -19,7 +19,7 @@ import os
 from . import scoresplots, datagrab
 
 
-def getleaderboard(Scoreboard, WeeksAhead, quiet=False):
+def getleaderboard(Scoreboard, WeeksAhead, leaderboardin, quiet=False):
     Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     
     scoresframe = (Scoreboard4.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
@@ -32,14 +32,22 @@ def getleaderboard(Scoreboard, WeeksAhead, quiet=False):
     
     leaderboard = scoresframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
     
-    auxstr = 'as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
-    if not quiet:
-        if 'cases' in Scoreboard.columns:
+    leaderboard['deltaW'] = WeeksAhead
+    
+    auxstr = ' as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
+    if 'cases' in Scoreboard.columns:
+        if not quiet:
             print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
-        else:
+        leaderboard['forecasttype'] = 'cases'
+    else:
+        if not quiet:
             print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
+        leaderboard['forecasttype'] = 'deaths'
+    leaderboard['asofdate'] = Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')    
+    leaderboard = pd.concat([leaderboardin, leaderboard], sort=False)
     
     return leaderboard
+
 
 def giveweightsformodels(Scoreboardx, datepred, weekcut):
     #str datecut e.g. '2020-07-01'
@@ -65,6 +73,7 @@ def giveweightsformodels(Scoreboardx, datepred, weekcut):
 #     ranksframe = ranksframe.rename(columns={'rank':'pastranks'})    
     
     return (scoresframe,listofavailablemodels,Scoreboardearly)
+
 
 def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
     """Generates all model weighted/unweighted ensembles
@@ -181,6 +190,7 @@ def givescoreweightedforecast(Scoreboardx,case):
         
     return (qso,vso)
 
+
 def getweightedmodelalldates(scoreboardx, startdate, case, nwk, runtype):
     """Generates all model weighted/unweighted ensembles for an nwk
     Args:
@@ -204,6 +214,7 @@ def getweightedmodelalldates(scoreboardx, startdate, case, nwk, runtype):
         
     #cumleaderboard.reset_index(inplace=True,drop=True)
     return scoreboard
+
 
 def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> pd.DataFrame:
     """Generates primary scores for all model competition entries
@@ -297,6 +308,7 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     
     return FirstForecasts
     
+
 def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
     '''Get pdf from cdf using Scoreboard dataset.
     

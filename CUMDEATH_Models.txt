@@ -25,15 +25,15 @@ Covid19Sim:Simulator
 USACE:ERDC_SEIR
 SWC:TerminusCM
 Auquan:SEIR
-OliverWyman:Navigator
 CovidActNow:SEIR_CAN
+OliverWyman:Navigator
 epiforecasts:ensemble1
 NotreDame:mobility
 MITCovAlliance:SIR
 QJHong:Encounter
 Columbia_UNC:SurvCon
-UMich:RidgeTfReg
 RobertWalraven:ESG
+UMich:RidgeTfReg
 Karlen:pypm
 UCM_MESALab:FoGSEIR
 DDS:NBDS
