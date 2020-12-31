@@ -8,12 +8,45 @@ from datetime import date, datetime, timedelta
 from tempfile import NamedTemporaryFile
 import matplotlib.pyplot as plt
 from matplotlib.image import imread
+from matplotlib.ticker import MaxNLocator
 import matplotlib.ticker as ticker
 import matplotlib.pylab as pl
 import matplotlib.dates as mdates
 from .scores import *
 from .__init__ import figures_dir, data_dir
+from functools import reduce
 import os
+
+def plotmads(Scoreboard):
+
+    df1 = getmad(Scoreboard,1)
+    df2 = getmad(Scoreboard,2)
+    df3 = getmad(Scoreboard,3)
+    df4 = getmad(Scoreboard,4)
+    dfs = [df1, df2, df3, df4]
+    df_merged = reduce(lambda  left,right: pd.merge(left,right,on=['model'],
+                                                how='outer'), dfs).fillna(np.NaN)
+    df_merged['sumall'] = df_merged['1-week-ahead'] + df_merged['2-week-ahead'] + df_merged['3-week-ahead'] + df_merged['4-week-ahead']
+
+    df_merged.drop(df_merged[df_merged['sumall'] > 100].index, inplace = True)
+    df_merged.dropna(inplace = True)
+    df_merged = df_merged.sort_values(by='sumall')
+    df_merged.drop(columns=['sumall'],inplace=True)
+    df_merged.reset_index(inplace=True,drop=True)
+
+    df_merged.plot.barh(stacked=True)
+    set_size(plt.gcf(), (5, 8))
+    plt.gca().set_yticklabels(df_merged['model'])
+    plt.xlabel('Median Absolute Deviation',size=16)
+    plt.legend(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.xticks(fontsize=14)
+    if 'deaths' in Scoreboard.columns:
+        plt.title('MAD Scores - Cumulative Deaths',size=16)
+        save_figures('MAD_deaths')     
+    else:
+        plt.title('MAD Scores - Weekly Cases',size=16)
+        save_figures('MAD_cases')
 
 def save_figures(name):
     global figures_dir
@@ -114,6 +147,7 @@ def plotallscoresdist(Scoreboard, model_target) -> None:
     Scoreboard.plot.scatter(x='deltaW', y='score', marker='.')
     plt.xlabel('N-Weeks Forward Forecast')
     plt.title(titlelabel + ' Forecasts')
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     save_figures(filelabel+'_ScoreVSx-Weeks_Forward_Forecast') 
     plt.show(fig)
     
@@ -131,7 +165,7 @@ def plotallscoresdist(Scoreboard, model_target) -> None:
     plt.show(fig)
 
     fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
-    Scoreboard.deltaW.hist(bins=range(1, int(Scoreboard['deltaW'].max()) + binwidth, binwidth))
+    Scoreboard.deltaW.hist(bins=np.arange(0.5, int(Scoreboard['deltaW'].max()) + 2*binwidth, binwidth))
     #plt.xlim(0, 22)
     plt.title(titlelabel + ' Forecasts')
     plt.xlabel('N-Weeks Forward Forecast')
@@ -364,7 +398,7 @@ def plotgroupsTD(Scoreboardx, modeltypes, model_target) -> None:
 
     if model_target == 'Case':
         filelabel = 'INCCASE'
-        titlelabel= 'weekly incidental cases'
+        titlelabel= 'weekly cases'
     elif model_target == 'Death':
         filelabel = 'CUMDEATH'
         titlelabel= 'cumulative deaths'        
@@ -447,9 +481,9 @@ def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
                                                   colors[i].tolist()[1],
                                                   colors[i].tolist()[2]),
                                           marker='o')
-    plt.title(str(numweeks)+'-week ahead forecasts')
+    plt.title('Model-averaged '+str(numweeks)+'-week-ahead forecasts')
     plt.legend(loc='best',labelspacing=.9)
-    plt.ylabel('Model-averaged score for ' + titlelabel)
+    plt.ylabel('Score for ' + titlelabel)
     plt.xlabel('Target End Date')
     plt.xlim([date0,dateticks[-1]])
     custom_tick_labels = map(lambda x: x.strftime('%Y-%m'), dateticks)
@@ -559,7 +593,7 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
 
     if 'cases' in Scoreboardx.columns:
         filelabel = 'INCCASE'
-        titlelabel= 'weekly incidental cases'
+        titlelabel= 'weekly cases'
     else:
         filelabel = 'CUMDEATH'
         titlelabel= 'cumulative deaths'        

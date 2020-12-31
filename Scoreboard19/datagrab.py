@@ -6,7 +6,6 @@ import numpy as np
 from datetime import date, datetime, timedelta
 import os
 
-
 def readobserveddeaths(writetocsv: bool = False)-> pd.DataFrame:
     """Read US cumulative deaths from covid19-forecast-hub
     Args:

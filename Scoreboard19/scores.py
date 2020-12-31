@@ -8,6 +8,77 @@ from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 import os
 
+def eliminateselfmodels(df):
+  
+    dfX = df[(df.model != 'FDANIHASU:Sunweight') &
+                                     (df.model != 'FDANIHASU:Sweight') &
+                                     (df.model != 'FDANIHASU:Sbest') &
+                                     (df.model != 'FDANIHASU:Sbestrank')].copy()
+    return dfX
+
+
+def isensemblegood(df):
+    """compares median difference in median scores per 1-6-weeks ahead 
+        (scoreweighted ensemble - median of all model scores)
+    Args:
+        df (pd.DataFrame): The scoreboard
+    Returns:
+        outdf (pd.DataFrame): median differences scoreboard
+    """       
+    
+    if 'cases' in df.columns:
+        label = 'diffscorecases'
+    else:
+        label = 'diffscoredeaths'
+    
+    #ensemble model
+    ensmod = df[(df['model']=='FDANIHASU:Sweight')].copy()
+    ensmodgrp = (ensmod.groupby(['target_end_date','deltaW'],as_index=False)[['score']].agg(lambda x: np.median(x)))
+    
+    #all models
+    dfel = eliminateselfmodels(df)
+    dfelgrp = (dfel.groupby(['target_end_date','deltaW'],as_index=False)[['score']].agg(lambda x: np.median(x)))
+    
+    #merge the two score dataframes on ensemble model frame
+    mergedgroups = ensmodgrp.merge(dfelgrp, left_on=['target_end_date','deltaW'], 
+          right_on=['target_end_date','deltaW']).copy()
+    
+    #find the difference
+    mergedgroups[label] = mergedgroups['score_x'] - mergedgroups['score_y']
+    mergedgroups.dropna(inplace=True)
+
+    outdf = (mergedgroups.groupby(['deltaW'],as_index=False)[[label]].agg(lambda x: np.median(x))).copy()
+    
+    return outdf
+
+def getmad(df,nwk):
+    """Generates mean absolute deviation dataframes for models
+    Args:
+        df (pd.DataFrame): The scoreboard
+        nwk (int): number of weeks ahead forecast ensemble formation
+    Returns:
+        outdf (pd.DataFrame): MAD scoreboard with the added ensemble for nwk
+    """        
+    madlab = str(nwk)+'-week-ahead'
+    
+    mdf = df[(df['deltaW']==nwk) &
+            (df.model != 'FDANIHASU:Sunweight') &
+            (df.model != 'FDANIHASU:Sbest') &
+            (df.model != 'FDANIHASU:Sbestrank')].copy()
+    listofmodels = mdf['model'].unique()
+    mad = [0] * len(listofmodels)
+    ind = 0
+    for themod in listofmodels:        
+        xx = mdf[(mdf['model']==themod)].score
+        mad[ind] = np.abs(xx-xx.median()).median()
+        ind += 1
+    
+    data = {'model':  listofmodels,madlab: mad}
+    outdf = pd.DataFrame(data,columns=['model',madlab]).sort_values(by=madlab)
+    outdf.reset_index(inplace=True,drop=True)
+    
+    return outdf
+
 def getleaderboard(Scoreboard,WeeksAhead,leaderboardin):
     
     Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
@@ -56,11 +127,11 @@ def giveweightsformodels(Scoreboardx,datepred,weekcut):
     scoresframe.reset_index(inplace=True,drop=True)
     scoresframe = scoresframe.rename(columns={'score':'pastscores'})
     
-#     ranksframe = (Scoreboardearly.groupby(['model'],as_index=False)[['rank']].agg(lambda x: np.mean(x))).sort_values(by=['rank'], ascending=False)    
-#     ranksframe.reset_index(inplace=True,drop=True)
-#     ranksframe = ranksframe.rename(columns={'rank':'pastranks'})    
+    ranksframe = (Scoreboardearly.groupby(['model'],as_index=False)[['rank']].agg(lambda x: np.mean(x))).sort_values(by=['rank'], ascending=False)    
+    ranksframe.reset_index(inplace=True,drop=True)
+    ranksframe = ranksframe.rename(columns={'rank':'pastranks'})    
     
-    return (scoresframe,listofavailablemodels,Scoreboardearly)
+    return (scoresframe,ranksframe,listofavailablemodels,Scoreboardearly)
 
 def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
     """Generates all model weighted/unweighted ensembles
@@ -81,32 +152,40 @@ def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
     datepredindate = datetime.strptime(datepred,'%Y-%m-%d')
     datecut = datepredindate - timedelta(days=(weekcut-1)*7)  
 
-    [scoresframe,listofavailablemodels,Scoreboardearly] = giveweightsformodels(Scoreboard,datepred,weekcut)
+    [scoresframe,ranksframe,listofavailablemodels,Scoreboardearly] = giveweightsformodels(Scoreboard,datepred,weekcut)
     predday = Scoreboard[(Scoreboard['target_end_date']==datepred)&(Scoreboard['deltaW']==weekcut)].copy()
 
 #     #We exclude COVIDhub:ensemble from our own ensemble as we know it is an ensemble of the models here
 #     predday.drop(predday[predday['model'] == 'COVIDhub:ensemble'].index, inplace = True)
-    predday.drop(predday[predday['model'] == 'FDANIH:Sweight'].index, inplace = True) 
-    predday.drop(predday[predday['model'] == 'FDANIH:Sunweight'].index, inplace = True) 
+    predday.drop(predday[predday['model'] == 'FDANIHASU:Sweight'].index, inplace = True) 
+    predday.drop(predday[predday['model'] == 'FDANIHASU:Sunweight'].index, inplace = True)
+    predday.drop(predday[predday['model'] == 'FDANIHASU:Sbest'].index, inplace = True)
+    predday.drop(predday[predday['model'] == 'FDANIHASU:Sbestrank'].index, inplace = True)
     
-    preddaymerged = predday.merge(scoresframe, left_on=['model'], right_on=['model']).copy()
-    #preddaymerged = tempframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
+    tempframe = predday.merge(scoresframe, left_on=['model'], right_on=['model']).copy()
+    preddaymerged = tempframe.merge(ranksframe, left_on=['model'], right_on=['model']).copy()
     
     if runtype=='weighted':
         preddaymerged['weights'] = np.exp(preddaymerged['pastscores'].astype(np.float64)/2)
-        modelname='FDANIH:Sweight'
+        modelname='FDANIHASU:Sweight'
     elif runtype=='unweighted':
         preddaymerged['weights'] = 1
-        modelname='FDANIH:Sunweight'
+        modelname='FDANIHASU:Sunweight'
+    elif runtype=='sbest':
+        preddaymerged['weights'] = np.exp(preddaymerged['pastscores'].astype(np.float64)/2)
+        modelname='FDANIHASU:Sbest'
+    elif runtype=='sbestrank':
+        preddaymerged['weights'] = np.exp(preddaymerged['pastscores'].astype(np.float64)/2)
+        modelname='FDANIHASU:Sbestrank'           
         
     sumweights = preddaymerged['weights'].sum()
-    preddaymerged['weights'] = preddaymerged['weights']/sumweights
-    
+    preddaymerged['weights'] = preddaymerged['weights']/sumweights   
+     
     if preddaymerged.empty:
         print('DataFrame is empty!')
         print(datepred)
     else:
-        (qso,vso) = givescoreweightedforecast(preddaymerged,case)
+        (qso,vso) = givescoreweightedforecast(preddaymerged,case,runtype)
         #plt.plot(qso,vso)
 
         if case=='Cases':
@@ -138,13 +217,21 @@ def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
 
         Scoreboard = Scoreboard.append(new_row, ignore_index=True)
 
-        Index = len(Scoreboard)-1
+        Index = len(Scoreboard)-1            
         result = giveqandscore(Scoreboard,Index)
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('score')] = result[0]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('sumpdf')] = result[1]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('prange')] = result[2]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('p')] = result[3]
-    
+
+#     scoreweightedscore = sum(preddaymerged[preddaymerged['score']!=np.NINF].score * preddaymerged[preddaymerged['score']!=np.NINF].weights)
+#     scoreweightedscore = sum(preddaymerged[preddaymerged['weights']!=0.0].score * preddaymerged[preddaymerged['weights']!=0.0].weights)           
+        
+#         if 'scoreWscore' not in Scoreboard:
+#             Scoreboard['scoreWscore'] = ''        
+        
+#         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('scoreWscore')] = scoreweightedscore
+        
     #leaderboard = preddaymerged[['model', 'deltaW', 'pastscores', 'pastranks','weights']].copy()
     #leaderboard['datecut'] = datecut
     #leaderboard['target_end_date'] = datepred
@@ -152,7 +239,7 @@ def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
     return Scoreboard
 
 
-def givescoreweightedforecast(Scoreboardx,case):
+def givescoreweightedforecast(Scoreboardx,case,runtype):
 
     Scoreboard = Scoreboardx.copy()
     if case=='Cases':
@@ -162,16 +249,34 @@ def givescoreweightedforecast(Scoreboardx,case):
          0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99]
         
     vso = [0] * len(mylist)
+    
+    if runtype == 'sbest':
+    
+        indexofmodelwithhighestweight = Scoreboard['weights'].idxmax(axis="columns")
+        vso = Scoreboard.iloc[indexofmodelwithhighestweight, 
+                              Scoreboard.columns.get_loc('value')]
+        qso = Scoreboard.iloc[indexofmodelwithhighestweight, 
+                              Scoreboard.columns.get_loc('quantile')]        
 
-    for Index in range(0,len(Scoreboard)):    
+    elif runtype == 'sbestrank':
+    
+        indexofmodelwithhighestweight = Scoreboard['pastranks'].idxmin(axis="columns")
+        vso = Scoreboard.iloc[indexofmodelwithhighestweight, 
+                              Scoreboard.columns.get_loc('value')]
+        qso = Scoreboard.iloc[indexofmodelwithhighestweight, 
+                              Scoreboard.columns.get_loc('quantile')]            
+        
+    else:
+        
+        for Index in range(0,len(Scoreboard)):    
 
-        qs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('quantile')]
-        vs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('value')]
-        wmodel = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('weights')]
+            qs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('quantile')]
+            vs = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('value')]
+            wmodel = Scoreboard.iloc[Index, Scoreboard.columns.get_loc('weights')]
 
-        for i in mylist:
-            loc = qs.index(i)
-            vso[loc] += wmodel * vs[loc]
+            for i in mylist:
+                loc = qs.index(i)
+                vso[loc] += wmodel * vs[loc]
 
         qso = mylist
         
@@ -349,7 +454,7 @@ def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
         dpgrid = np.arange(np.round(min(dp))+0.5,np.round(max(dp))+0.5,1)          
         
         #Do PCHIP interpolation
-        pchip_obj1 = scipy.interpolate.PchipInterpolator(dp, cdf)
+        pchip_obj1 = scipy.interpolate.PchipInterpolator(dp, cdf, extrapolate=False)
         
         #Get PDF based on the PCHIPed cdf
         pdf2 = np.gradient(np.array(pchip_obj1(dpgrid), dtype=float), 
