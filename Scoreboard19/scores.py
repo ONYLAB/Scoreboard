@@ -8,6 +8,16 @@ from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 import os
 
+def givebestmodelname(df,nwk,casttype,byrankorscore):
+
+    if byrankorscore=='scores':
+        mod1 = df[(df['deltaW']==nwk)&
+                    (df['forecasttype']==casttype)].sort_values(by='median of past scores',ascending=False).head(1)['model'].item()
+    elif byrankorscore=='ranks':
+        mod1 = df[(df['deltaW']==nwk)&
+                    (df['forecasttype']==casttype)].sort_values(by='average of past rankings',ascending=True).head(1)['model'].item()
+    return mod1
+
 def eliminateselfmodels(df):
   
     dfX = df[(df.model != 'FDANIHASU:Sunweight') &
@@ -79,9 +89,21 @@ def getmad(df,nwk):
     
     return outdf
 
-def getleaderboard(Scoreboard,WeeksAhead,leaderboardin):
+def getleaderboard(df,WeeksAhead,leaderboardin,datestartscoring):
     
-    Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+    donottakeratio = 0.5 #Do not include that has less than 50% entries out of possible forecast weeks
+    Scoreboard = eliminateselfmodels(df)
+    
+    Scoreboard4 = Scoreboard[(Scoreboard['deltaW']==WeeksAhead)&
+                             (Scoreboard['target_end_date']>=datestartscoring)].copy()
+    
+    maxnumweeksavailable = len(Scoreboard4['target_end_date'].unique())
+    listofmodels = Scoreboard4['model'].unique()
+    
+    for model in listofmodels:
+        nummodelentries = len(Scoreboard4[Scoreboard4['model']==model])
+        if nummodelentries<np.round(maxnumweeksavailable*donottakeratio):
+            Scoreboard4.drop(Scoreboard4[Scoreboard4['model']==model].index, inplace = True) 
     
     scoresframe = (Scoreboard4.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
     scoresframe.reset_index(inplace=True,drop=True)
@@ -150,7 +172,7 @@ def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
     Scoreboard = Scoreboardx.copy() 
     
     datepredindate = datetime.strptime(datepred,'%Y-%m-%d')
-    datecut = datepredindate - timedelta(days=(weekcut-1)*7)  
+    datecut = datepredindate - timedelta(days=weekcut*7)  
 
     [scoresframe,ranksframe,listofavailablemodels,Scoreboardearly] = giveweightsformodels(Scoreboard,datepred,weekcut)
     predday = Scoreboard[(Scoreboard['target_end_date']==datepred)&(Scoreboard['deltaW']==weekcut)].copy()

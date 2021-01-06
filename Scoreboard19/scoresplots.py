@@ -587,8 +587,11 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
     Returns:
         None 
     """
+    
+    maxcharsinstr = 21
+    
     Scoreboard = Scoreboardx[Scoreboardx['deltaW']==WeeksAhead].copy()
-    Scoreboard['model'] = Scoreboard['model'].str.slice(0,21)
+    Scoreboard['model'] = Scoreboard['model'].str.slice(0,maxcharsinstr)
     Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
 
     if 'cases' in Scoreboardx.columns:
@@ -616,9 +619,10 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
     plt.figure(figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')
 
     for i in range(len(listmods)):
-        if listmods[i] in pivMerdfPRED.columns:
-            if ~pivMerdfPRED[listmods[i]].isnull().all():                
-                pivMerdfPRED[listmods[i]].dropna().plot(color=(colors[i].tolist()[0],
+        model = listmods[i][0:maxcharsinstr]
+        if model in pivMerdfPRED.columns:            
+            if ~pivMerdfPRED[model].isnull().all():                
+                pivMerdfPRED[model].dropna().plot(color=(colors[i].tolist()[0],
                                                   colors[i].tolist()[1],
                                                   colors[i].tolist()[2]),
                                           marker='o')
