@@ -193,7 +193,7 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     Scoreboardx.sort_values('target_end_date',inplace=True)
     Scoreboardx.reset_index(inplace=True)  
-    plt.figure(num=None, figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
+    plt.figure(num=None, figsize=(8, 6), dpi=300, facecolor='w', edgecolor='k')
     models = Scoreboardx['model'].unique()
     colors = pl.cm.jet(np.linspace(0,1,len(curmodlist)))
     i = 0
@@ -208,11 +208,11 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
                   colors[i].tolist()[1],
                   colors[i].tolist()[2])
 
-        plt.plot(dates,PE,color=modcol,label=curmod)
+        plt.plot(dates,PE,color=modcol,label=curmod,linewidth=2.0)
         plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)
         i = i+1
 
-    plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
+    plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=2.0)    
     plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
     plt.ylabel('US Cumulative '+scoretype, fontsize=18)
     plt.xlabel('Date', fontsize=18)
@@ -461,10 +461,10 @@ def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==numweeks].copy()
     (MerdfPRED,pivMerdfPRED) = givePivotScoreTARGET(Scoreboardx,modeltypes)
     
-    date0 = datetime.strptime('2020-04-25','%Y-%m-%d')
-    dateticks = list(perdelta(date0, 
-                              Scoreboardx.target_end_date.max() + timedelta(days=28), 
-                              timedelta(days=28)))
+    date0 = '2020-04-01'
+    finaldate = (pd.to_datetime(Scoreboard['target_end_date'].max())+timedelta(days=64)).strftime('%Y-%m')
+    dateticks = pd.date_range(date0,
+                              finaldate+'-01' , freq='1M')-pd.offsets.MonthBegin(1)
     
     selectmodels = modeltypes['modeltype'].unique().tolist()
     for selectmodel in selectmodels:
@@ -485,7 +485,7 @@ def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
     plt.legend(loc='best',labelspacing=.9)
     plt.ylabel('Score for ' + titlelabel)
     plt.xlabel('Target End Date')
-    plt.xlim([date0,dateticks[-1]])
+    plt.xlim([dateticks[0],dateticks[-1]])
     custom_tick_labels = map(lambda x: x.strftime('%Y-%m'), dateticks)
     plt.xticks(dateticks,custom_tick_labels)
     plt.xticks(rotation=45)
@@ -578,7 +578,80 @@ def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         plt.xticks(dateticks,custom_tick_labels)
         plt.xticks(rotation=45)
         save_figures(str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models')
-        
+
+def plotTDinf(Scoreboardx, WeeksAhead, listmods) -> None:
+    """Generates modeltype-based score plots in time (Forecast Date)
+    Args:
+        Scoreboard (pd.DataFrame): Scoreboard
+    Returns:
+        None 
+    """
+    
+    maxcharsinstr = 21
+    
+    Scoreboard = Scoreboardx[Scoreboardx['deltaW']==WeeksAhead].copy()
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
+    minscore = np.round(Scoreboard[Scoreboard['model'].isin(listmods)].score.min())
+    maxscore = np.round(Scoreboard[Scoreboard['model'].isin(listmods)].score.max())
+    Scoreboard['model'] = Scoreboard['model'].str.slice(0,maxcharsinstr)
+
+    if 'cases' in Scoreboardx.columns:
+        filelabel = 'INCCASE'
+        titlelabel= 'weekly cases'
+    else:
+        filelabel = 'CUMDEATH'
+        titlelabel= 'cumulative deaths'    
+    
+    MerdfPRED = Scoreboard.copy()
+    MerdfPRED = (MerdfPRED.groupby(['model','target_end_date'],
+                                            as_index=False)[['delta','score']].agg(lambda x: list(x)))
+
+    MerdfPRED['median'] = MerdfPRED.apply(lambda row : np.median(row['score']), axis = 1) 
+    
+    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
+    
+    date0 = '2020-05-01'
+    finaldate = (pd.to_datetime(Scoreboard['target_end_date'].max())+timedelta(days=64)).strftime('%Y-%m')
+    dateticks = pd.date_range(date0,
+                              finaldate+'-01' , freq='1M')-pd.offsets.MonthBegin(1)
+
+    colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
+    plt.figure(figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')   
+    
+    for i in range(len(listmods)):
+        model = listmods[i][0:maxcharsinstr]
+        if model in pivMerdfPRED.columns:            
+            pivMerdfPRED[model].plot(color=(colors[i].tolist()[0],
+                                                  colors[i].tolist()[1],
+                                                  colors[i].tolist()[2]),
+                                          marker='o',zorder=7)
+            df = Scoreboard[(Scoreboard['model']==model)&
+                      (Scoreboard['score'].isnull())].copy()
+            df.replace([np.nan], minscore-1, inplace=True)
+            df['score'] += i*0.15 + 0.05
+            df = pd.concat([df]*2) #this is a hack to prevent some marker points not showing
+            df.plot.scatter(ax=plt.gca(),x='target_end_date',y='score',
+                       color=(colors[i].tolist()[0],
+                                                  colors[i].tolist()[1],
+                                                  colors[i].tolist()[2]),
+                                          marker='o',s=7,zorder=7)
+     
+    plt.legend(loc='best',labelspacing=.5,fontsize=9)
+    plt.title(str(WeeksAhead)+'-week-ahead Scores',fontsize=18)
+    
+    plt.ylabel('Scores for ' + titlelabel,fontsize=18)
+    
+    plt.xlabel('Target End Date',fontsize=18)
+    plt.xlim([dateticks[0],dateticks[-1]])
+    custom_tick_labels = map(lambda x: x.strftime('%Y-%m'), dateticks)
+    plt.xticks(dateticks,custom_tick_labels)
+    plt.xticks(rotation=45)
+    
+    ax = plt.gca()
+    scoreticks = np.arange(minscore-1, maxscore+4, 2)
+    ax.set_yticks(scoreticks)
+    plt.ylim([minscore-1,maxscore+4])
+    plt.axhline(y=minscore-0.5, color='k', linestyle='-')
         
 def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
@@ -610,10 +683,10 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
     
     pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
     
-    date0 = datetime.strptime('2020-04-25','%Y-%m-%d')
-    dateticks = list(perdelta(date0, 
-                              Scoreboardx.target_end_date.max() + timedelta(days=28), 
-                              timedelta(days=28)))
+    date0 = '2020-04-01'
+    finaldate = (pd.to_datetime(Scoreboard['target_end_date'].max())+timedelta(days=64)).strftime('%Y-%m')
+    dateticks = pd.date_range(date0,
+                              finaldate+'-01' , freq='1M')-pd.offsets.MonthBegin(1)
 
     colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
     plt.figure(figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')
@@ -631,7 +704,7 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
     plt.title(str(WeeksAhead)+'-week-ahead Scores',fontsize=18)
     plt.ylabel('Scores for ' + titlelabel,fontsize=18)
     plt.xlabel('Target End Date',fontsize=18)
-    plt.xlim([date0,dateticks[-1]])
+    plt.xlim([dateticks[0],dateticks[-1]])
     custom_tick_labels = map(lambda x: x.strftime('%Y-%m'), dateticks)
     plt.xticks(dateticks,custom_tick_labels)
     plt.xticks(rotation=45)

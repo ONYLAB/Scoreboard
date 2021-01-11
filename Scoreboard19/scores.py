@@ -92,7 +92,10 @@ def getmad(df,nwk):
 def getleaderboard(df,WeeksAhead,leaderboardin,datestartscoring):
     
     donottakeratio = 0.5 #Do not include that has less than 50% entries out of possible forecast weeks
-    Scoreboard = eliminateselfmodels(df)
+    Scoreboard = df[(df.model != 'FDANIHASU:Sunweight') &
+             (df.model != 'FDANIHASU:Sbest') &
+             (df.model != 'FDANIHASU:Sbestrank')].copy()
+    #Scoreboard = eliminateselfmodels(df)
     
     Scoreboard4 = Scoreboard[(Scoreboard['deltaW']==WeeksAhead)&
                              (Scoreboard['target_end_date']>=datestartscoring)].copy()
@@ -245,7 +248,15 @@ def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('sumpdf')] = result[1]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('prange')] = result[2]
         Scoreboard.iloc[Index, Scoreboard.columns.get_loc('p')] = result[3]
-
+        
+        if 'consmodels' not in Scoreboard.columns:
+            Scoreboard['consmodels'] = ''
+        if 'weightmodels' not in Scoreboard.columns:
+            Scoreboard['weightmodels'] = ''
+            
+        Scoreboard.at[Index, 'consmodels'] = preddaymerged['model'].tolist()
+        Scoreboard.at[Index, 'weightmodels'] = preddaymerged['weights'].tolist()
+                
 #     scoreweightedscore = sum(preddaymerged[preddaymerged['score']!=np.NINF].score * preddaymerged[preddaymerged['score']!=np.NINF].weights)
 #     scoreweightedscore = sum(preddaymerged[preddaymerged['weights']!=0.0].score * preddaymerged[preddaymerged['weights']!=0.0].weights)           
         
