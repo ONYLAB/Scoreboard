@@ -18,8 +18,8 @@ Epidemiological models of COVID-19 have proliferated quickly. It is important to
 This code is open source under the MIT License.
 Correspondence on modeling and the code should be directed to carsonc at nih dot gov or osman dot yogurtcu at fda dot hhs dot gov.
 
-![fignummodel](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/numberofmodels.png)
+![fignummodel](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/numberofmodels.svg)
 
-![uscases](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USCases.png)
+![uscases](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USCases.svg)
 
-![usdeaths](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USDeaths.png)
+![usdeaths](https://github.com/ONYLAB/Scoreboard/blob/master/Figures/USDeaths.svg)
