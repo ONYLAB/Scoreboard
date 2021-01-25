@@ -3,11 +3,11 @@ LANL:GrowthRate
 IowaStateLW:STEM
 Covid19Sim:Simulator
 Columbia_UNC:SurvCon
-UCLA:SuEIR
 JHU_IDD:CovidSP
+UCLA:SuEIR
 OliverWyman:Navigator
-CovidAnalytics:DELPHI
 USACE:ERDC_SEIR
+CovidAnalytics:DELPHI
 UMich:RidgeTfReg
 RobertWalraven:ESG
 QJHong:Encounter
@@ -17,10 +17,10 @@ COVIDhub:ensemble
 Karlen:pypm
 DDS:NBDS
 CU:nochange
+CU:scenario_low
+CU:select
 CU:scenario_mid
 CU:scenario_high
-CU:select
-CU:scenario_low
 CEID:Walk
 JHUAPL:Bucky
 BPagano:RtDriven
@@ -35,3 +35,6 @@ OneQuietNight:ML
 IQVIA_ACOE:STAN
 IEM_MED:CovidProject
 Microsoft:DeepSTIA
+SigSci:TS
+UpstateSU:GRU
+MIT_ISOLAT:Mixtures

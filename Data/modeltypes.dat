@@ -60,5 +60,8 @@ IQVIA_ACOE:STAN,stat&prob
 OneQuietNight:ML,stat&prob
 MIT_CritData:GBCF,stat&prob
 Microsoft:DeepSTIA,stat&prob
-FDANIH:Sweight,ensemble
-FDANIH:Sunweight,ensemble
+FDANIHASU:Sweight,ensemble
+FDANIHASU:Sunweight,ensemble
+SigSci:TS,stat&prob
+UpstateSU:GRU,stat&prob
+MIT_ISOLAT:Mixtures,stat&prob
