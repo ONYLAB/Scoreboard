@@ -19,7 +19,7 @@ import os
 from . import scoresplots, datagrab
 
 
-def getleaderboard(Scoreboard, WeeksAhead, leaderboardin, quiet=False):
+def getleaderboard(Scoreboard, WeeksAhead, leaderboardin=None, quiet=False):
     Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     
     scoresframe = (Scoreboard4.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
@@ -44,7 +44,8 @@ def getleaderboard(Scoreboard, WeeksAhead, leaderboardin, quiet=False):
             print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
         leaderboard['forecasttype'] = 'deaths'
     leaderboard['asofdate'] = Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')    
-    leaderboard = pd.concat([leaderboardin, leaderboard], sort=False)
+    if leaderboardin:
+        leaderboard = pd.concat([leaderboardin, leaderboard], sort=False)
     
     return leaderboard
 
