@@ -196,7 +196,7 @@ def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks, numweeks
     if scoretype == 'Cases':
         titlelabel= 'weekly incidental cases'
     elif scoretype == 'Deaths':
-        titlelabel= 'cumulative deaths'          
+        titlelabel= 'weekly deaths'          
         
     numweeks += 1
     labelp = 'Average Unweighted Forecasts'
