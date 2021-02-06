@@ -529,7 +529,7 @@ def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         save_figures(str(numweeks)+'Week/'+filelabel+'_Forward_Scores_'+selectmodel+'models')
         
         
-def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
+def plotTD(Scoreboardx, WeeksAhead, models) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
         Scoreboard (pd.DataFrame): Scoreboard
@@ -561,13 +561,13 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
                               Scoreboardx.target_end_date.max() + timedelta(days=28), 
                               timedelta(days=28)))
 
-    colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
+    colors = pl.cm.jet(np.linspace(0,1,len(models)))
     plt.figure(figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')
 
-    for i in range(len(listmods)):
-        if listmods[i] in pivMerdfPRED.columns:
-            if ~pivMerdfPRED[listmods[i]].isnull().all():                
-                pivMerdfPRED[listmods[i]].dropna().plot(color=(colors[i].tolist()[0],
+    for i in range(len(models)):
+        if models[i] in pivMerdfPRED.columns:
+            if ~pivMerdfPRED[models[i]].isnull().all():                
+                pivMerdfPRED[models[i]].dropna().plot(color=(colors[i].tolist()[0],
                                                   colors[i].tolist()[1],
                                                   colors[i].tolist()[2]),
                                           marker='o')
@@ -584,11 +584,13 @@ def plotTD(Scoreboardx, WeeksAhead, listmods) -> None:
     set_size(plt.gcf(), (6, 6))
     save_figures(str(WeeksAhead)+'Week/'+filelabel+'_top10models')    
 
+
 def get_size(fig, dpi=100):
     with NamedTemporaryFile(suffix='.png') as f:
         fig.savefig(f.name, bbox_inches='tight', dpi=dpi)
         height, width, _channels = imread(f.name).shape
         return width / dpi, height / dpi
+
 
 def set_size(fig, size, dpi=100, eps=1e-2, give_up=2, min_size_px=10):
     target_width, target_height = size
