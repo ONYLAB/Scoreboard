@@ -1,0 +1,244 @@
+---
+jupyter:
+  jupytext:
+    formats: ipynb,Rmd
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.9.1
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<!-- #region extensions={"jupyter_dashboards": {"version": 1, "views": {"grid_default": {"col": 0, "height": 3, "hidden": false, "row": 0, "width": 12}, "report_default": {"hidden": false}}}} -->
+<img src='https://i.imgur.com/QmqZv8W.png' width=150%>
+<div class='info'>
+Epidemiological models of COVID-19 forecast the number of future cases and deaths.
+Quantifying the accuracy of these models can help to inform public health decisions.
+    <b>COVIDForeca.st</b> scores the predictive ability of publicly available COVID-19 epidemiological models on the <a href=https://covid19forecasthub.org>COVID-19 Forecast Hub</a>.
+Our scoring system uses the posted forecast cumulative distributions to compute the log-likelihood for held-out COVID-19 positive cases and deaths.
+Scores are updated continuously as new data become available, and model performance is tracked over time.
+The leaderboard considers predictions from July 4th, 2020 and beyond, and includes only those models covering at least half of that timespan.
+</div>
+<!-- #endregion -->
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 1, 'hidden': True, 'row': 0, 'width': 1}, 'report_default': {'hidden': False}}}}}
+# %load_ext autoreload
+# %autoreload 2
+# %matplotlib inline
+# #%config InlineBackend.figure_format = 'svg'
+import ipywidgets as ipyw
+from ipywidgets import HBox, VBox, Text, HTML, Label, AppLayout, IntSlider, IntRangeSlider, Dropdown, Output
+from IPython.display import display, clear_output, HTML
+import matplotlib.pyplot as plt
+import pandas as pd
+from pathlib import Path
+import qgrid
+import seaborn as sns
+import sys
+sns.set(font_scale=1)
+sns.set_style('whitegrid')
+
+sys.path.insert(0, '..')
+import Scoreboard19 as S19
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 1, 'hidden': True, 'row': 0, 'width': 1}, 'report_default': {'hidden': False}}}}}
+#US_cases = S19.read_observed('cases', writetocsv=True)
+#US_deaths = S19.read_observed('deaths', writetocsv=True)
+US_cases = S19.read_observed('cases', use_cache=True)
+US_deaths = S19.read_observed('deaths', use_cache=True)
+scoreboard_cases = pd.read_pickle(S19.data_dir / 'ScoreboardCases.pkl')
+scoreboard_deaths = pd.read_pickle(S19.data_dir / 'ScoreboardDeaths.pkl')
+scoreboard_cases = S19.fix_scoreboard(scoreboard_cases, kind='Case', quiet=True, plot=False)
+scoreboard_deaths = S19.fix_scoreboard(scoreboard_deaths, kind='Death', quiet=True, plot=False)
+centered = ipyw.Layout(align_items='center', align_self='center',
+                       padding='1px', border='1px', margin='1px')
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'width': 1, 'height': 1, 'col': 0, 'row': 0, 'hidden': True}, 'report_default': {'hidden': False}}}}}
+def get_qgrid(scoreboard, weeks_ahead):
+    df = S19.getleaderboard(scoreboard, weeks_ahead, quiet=True)
+    df.columns = [x.title().replace('Of ', '').replace('Rankings', 'Rank').replace('Average', 'Mean').replace('Past ', '').replace('Scores', 'Score')
+                  for x in df.columns]
+    df.iloc[:, 1] = df.iloc[:, 1].round(2)
+    df.iloc[:, 2] = df.iloc[:, 2].round(1)
+    df['Team'] = df['Model'].apply(lambda x: x.split(':')[0])
+    df['Model'] = df['Model'].apply(lambda x: x.split(':')[1])
+    df = df.set_index('Team')
+    df = df.drop(['Deltaw', 'Forecasttype', 'Asofdate'], axis=1)
+    #df.index.name = "Team:Model"
+    return qgrid.show_grid(df, grid_options={'width': 450, 'forceFitColumns': True, 'defaultColumnWidth': 110})
+
+def table_widgets(scoreboard, title):
+    """df should be e.g. scoreboard_cases"""
+    output = Output()
+
+    def slide(slider_value):
+        weeks_ahead = slider_value['new']
+    
+        with output:
+            q = get_qgrid(scoreboard, weeks_ahead)
+            q.layout = ipyw.Layout(padding='10px', width='458px', align_items='center')
+            clear_output(wait=True)
+            display(q)
+        
+    slider = IntSlider(value=3, min=1, max=6, description='Leaderboard Weeks Ahead', continuous_update=False)
+    slider.style = {'description_width': 'initial'}
+    slider.layout = ipyw.Layout(align_items='center', align_self='center', height='100px', width='90%')
+    slider.observe(slide, names='value')
+    d = VBox([slider, output, Label(title)], layout=centered)
+    d.children[0].value = 3  # First one doesn't manager to trigger the change
+    d.children[0].value = 4  # But second one does
+    return d
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'width': 6, 'height': 5, 'col': 0, 'row': 3, 'hidden': False}, 'report_default': {'hidden': False}}}}}
+d = table_widgets(scoreboard_cases, 'US weekly incidental case count forecast scores')
+display(d)
+
+"""Put this CSS here so it forces it to render but doesn't take up it's own gridstack card"""
+display(HTML("""
+<style>
+.widget-label {
+    text-align: center;
+    font-size: 150%;
+}
+.widget-readout {
+    text-align: center;
+    font-size: 150%;
+}
+.q-grid-container {
+    text-align: center;
+}
+.info {
+    font-size: 125%;
+}
+.caption {
+    font-size: 125%;
+}
+</style>
+"""))
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'width': 6, 'height': 5, 'col': 6, 'row': 3, 'hidden': False}, 'report_default': {'hidden': False}}}}}
+d = table_widgets(scoreboard_deaths, 'US weekly cumulative death count forecast scores')
+display(d)
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 1, 'hidden': True, 'row': 0, 'width': 1}, 'report_default': {}}}}}
+def scores_by_date(scoreboard, title):
+    #title = Label(title)
+    slider = IntSlider(value=2, min=1, max=6, description='Weeks Ahead', continuous_update=False)
+    slider.style = {'description_width': 'initial'}
+    slider.layout = ipyw.Layout(align_items='center', align_self='center', height='100px', width='90%')
+    models = list(scoreboard['model'].unique())
+    dropdown_a = Dropdown(options=[''] + models, value='FDANIH:Sunweight', description="Model A")
+    dropdown_a.layout = ipyw.Layout(align_items='center', align_self='center', height='40px', width='70%')
+    dropdown_b = Dropdown(options=[''] + models, value='FDANIH:Sweight', description="Model B")
+    dropdown_b.layout = ipyw.Layout(align_items='center', align_self='center', height='40px', width='70%')
+    out = Output()
+
+    def update(x):
+        selected_models = (dropdown_a.value, dropdown_b.value)
+        selected_models = list(set([m for m in selected_models if m in models]))
+        weeks_ahead = slider.value
+        with out:
+            clear_output(wait=True)
+            S19.plotTD(scoreboard, weeks_ahead, selected_models)
+            plt.show()
+
+    slider.observe(update, names='value')
+    dropdown_a.observe(update)
+    dropdown_b.observe(update)
+    d = VBox([slider, HBox([dropdown_a, dropdown_b]), out], layout=centered)
+    display(d)
+    slider.value = 4
+    html = """
+    <div class='caption'>
+    <b>%s.</b>
+    </div>
+    """ % title
+    display(HTML(html))
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 8, 'hidden': False, 'row': 8, 'width': 6}, 'report_default': {}}}}}
+scores_by_date(scoreboard_cases, "Case Count Forecast Scores by Week")
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 6, 'height': 8, 'hidden': False, 'row': 8, 'width': 6}, 'report_default': {}}}}}
+scores_by_date(scoreboard_deaths, "Death Count Forecast Scores by Week")
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 1, 'hidden': True, 'row': 0, 'width': 1}, 'report_default': {}}}}}
+def scores_by_date_range(scoreboard, US, kind, title, max_weeks_ahead=7):
+    title = Label(title)
+    slider = IntRangeSlider(value=[2, 6], min=1, max=max_weeks_ahead, description='Weeks Ahead', continuous_update=False)
+    slider.style = {'description_width': 'initial'}
+    slider.layout = ipyw.Layout(align_items='center', align_self='center', height='100px', width='70%')
+    out = Output()
+
+    def slide(x):
+        numweeks_start, numweeks = x['new']
+        with out:
+            clear_output(wait=True)
+            S19.plotlongitudinalUNWEIGHTED(US, scoreboard, kind, numweeks,
+                                           numweeks_start=numweeks_start, max_weeks_ahead=max_weeks_ahead+1)
+            plt.show()
+
+    slider.observe(slide, names='value')
+    d = VBox([slider, out], layout=centered)
+    display(d)
+    slider.value = (1, max_weeks_ahead)
+    html = """<div class='caption'>
+    <b>%s Forecast performance over time.</b>
+    TOP FIGURES: Black solid curves represent the observed US weekly %s counts.
+    Other curves represent the median of the forecasts for the target end date made from
+    1 to 7-weeks prior to the target end dates.
+    BOTTOM FIGURES: Curves represent the median of the forecast scores colored based on their
+    forecasting horizon (1-week prior to 7-weeks prior color-matching to figures above). 
+    NOTE: Discontinuities in the score plots imply that the median value of the scores
+    for a particular time-horizon is $-\infty$, demonstrating the poor performance especially
+    on the inflection points of the epidemiological curves.
+    </div>""" % (kind.title(), kind[:-1].lower())
+    display(HTML(html))
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 7, 'hidden': False, 'row': 16, 'width': 6}, 'report_default': {}}}}}
+scores_by_date_range(scoreboard_cases, US_cases, "Cases", "Cases Forecast")
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 6, 'height': 7, 'hidden': False, 'row': 16, 'width': 6}, 'report_default': {}}}}}
+scores_by_date_range(scoreboard_deaths, US_deaths, "Deaths", "Deaths Forecast")
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 1, 'hidden': True, 'row': 0, 'width': 1}, 'report_default': {}}}}}
+def all_scores_dist(scoreboard, kind):
+    out = Output(layout=centered)
+    with out:
+        clear_output(wait=True)
+        S19.plotallscoresdist(scoreboard, kind, interval='Weeks')
+        plt.show()
+    html = """
+    <div class='caption'>
+    <b>Scores over Time (%ss)</b>.
+    (TOP) Scatter plot for all scores as a function of the forecast horizon
+    (Weekly incidental %s forecast scores).
+    (BOTTOM) Histogram of weekly %s count forecasts.
+    </div>
+    """ % (kind.title(), kind.lower(), kind.lower())
+    d = VBox([out], layout=centered)
+    display(d)
+    display(HTML(html))
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 0, 'height': 5, 'hidden': False, 'row': 23, 'width': 6}, 'report_default': {}}}}}
+all_scores_dist(scoreboard_cases, "Case")
+```
+
+```{python extensions={'jupyter_dashboards': {'version': 1, 'views': {'grid_default': {'col': 6, 'height': 5, 'hidden': False, 'row': 23, 'width': 6}, 'report_default': {}}}}}
+all_scores_dist(scoreboard_cases, "Death")
+```
