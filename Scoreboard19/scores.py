@@ -6,8 +6,19 @@ import pandas as pd
 import numpy as np
 from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
-import os
+"""Functions for preparing scores."""
 
+from tqdm import tqdm
+import scipy.interpolate
+import pandas as pd
+import numpy as np
+from datetime import date, datetime, timedelta
+import matplotlib.pyplot as plt
+import os
+import os
+from . import scoresplots, datagrab
+
+<<<<<<< HEAD
 def givebestmodelname(df,nwk,casttype,byrankorscore):
 
     if byrankorscore=='scores':
@@ -107,6 +118,11 @@ def getleaderboard(df,WeeksAhead,leaderboardin,datestartscoring):
         nummodelentries = len(Scoreboard4[Scoreboard4['model']==model])
         if nummodelentries<np.round(maxnumweeksavailable*donottakeratio):
             Scoreboard4.drop(Scoreboard4[Scoreboard4['model']==model].index, inplace = True) 
+=======
+
+def getleaderboard(Scoreboard, WeeksAhead, leaderboardin=None, quiet=False):
+    Scoreboard4 = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+>>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
     
     scoresframe = (Scoreboard4.groupby(['model'],as_index=False)[['score']].agg(lambda x: np.median(x))).sort_values(by=['score'], ascending=False)    
     scoresframe.reset_index(inplace=True,drop=True)
@@ -122,18 +138,21 @@ def getleaderboard(df,WeeksAhead,leaderboardin,datestartscoring):
     
     auxstr = ' as of ' + Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')
     if 'cases' in Scoreboard.columns:
-        print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
+        if not quiet:
+            print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead weekly incidental case forecasts ' + auxstr)
         leaderboard['forecasttype'] = 'cases'
     else:
-        print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
+        if not quiet:
+            print('Leaderboard for ' + str(WeeksAhead) + '-week-ahead cumulative deaths forecasts' + auxstr)
         leaderboard['forecasttype'] = 'deaths'
-        
     leaderboard['asofdate'] = Scoreboard['target_end_date'].max().strftime('%Y-%m-%d')    
-    leaderboard = pd.concat([leaderboardin, leaderboard], sort=False)
+    if leaderboardin:
+        leaderboard = pd.concat([leaderboardin, leaderboard], sort=False)
     
     return leaderboard
 
-def giveweightsformodels(Scoreboardx,datepred,weekcut):
+
+def giveweightsformodels(Scoreboardx, datepred, weekcut):
     #str datecut e.g. '2020-07-01'
     #Make sure we take only one prediction per model
     
@@ -157,6 +176,7 @@ def giveweightsformodels(Scoreboardx,datepred,weekcut):
     ranksframe = ranksframe.rename(columns={'rank':'pastranks'})    
     
     return (scoresframe,ranksframe,listofavailablemodels,Scoreboardearly)
+
 
 def getscoresforweightedmodels(Scoreboardx,datepred,weekcut,case,runtype):
     """Generates all model weighted/unweighted ensembles
@@ -315,7 +335,8 @@ def givescoreweightedforecast(Scoreboardx,case,runtype):
         
     return (qso,vso)
 
-def getweightedmodelalldates(scoreboardx,startdate,case,nwk,runtype):
+
+def getweightedmodelalldates(scoreboardx, startdate, case, nwk, runtype):
     """Generates all model weighted/unweighted ensembles for an nwk
     Args:
         scoreboardx (pd.DataFrame): The scoreboard
@@ -338,6 +359,7 @@ def getweightedmodelalldates(scoreboardx,startdate,case,nwk,runtype):
         
     #cumleaderboard.reset_index(inplace=True,drop=True)
     return scoreboard
+
 
 def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> pd.DataFrame:
     """Generates primary scores for all model competition entries
@@ -431,6 +453,7 @@ def getscoreboard(groundtruth,model_target,otpfile='ScoreboardDataCases.pkl')-> 
     
     return FirstForecasts
     
+
 def cdfpdf(df,Index,dV,withplot: bool = False, figuresdirectory: str = ''):
     '''Get pdf from cdf using Scoreboard dataset.
     
@@ -636,3 +659,17 @@ def givePivotScoreTARGET(Scoreboard,modeltypes) -> tuple:
     pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
     
     return (MerdfPRED,pivMerdfPRED)
+
+
+def fix_scoreboard(scoreboard, kind='Case', quiet=False, plot=True):
+    #Eliminate scores that do not have the proper score quantiles
+    delete_row = scoreboard[scoreboard["proper"]==False].index
+    scoreboard.drop(delete_row,inplace=True)
+    scoreboard.reset_index(drop=True, inplace=True)
+    if plot:
+        scoresplots.plotdifferencescdfpdf(scoreboard, kind, quiet=quiet)
+    modeltypesCases = datagrab.getmodeltypes(scoreboard, quiet=quiet)
+    #Get the weekly forecast score rankings
+    grouped =  scoreboard.groupby(['target_end_date','deltaW'])
+    scoreboard['rank'] = grouped['score'].transform(lambda x: pd.factorize(-x, sort=True)[0]+1)
+    return scoreboard
