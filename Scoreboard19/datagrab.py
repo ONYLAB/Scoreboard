@@ -8,14 +8,9 @@ import os
 from urllib.parse import quote
 from . import paths
 
-<<<<<<< HEAD
-def readobserveddeaths(writetocsv: bool = False)-> pd.DataFrame:
-    """Read US cumulative deaths from covid19-forecast-hub
-=======
 
 def read_observed(kind, writetocsv: bool = False, use_cache: bool = False)-> pd.DataFrame:
     """Read US cumulative cases or deaths from covid19-forecast-hub
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
     Args:
         use_cache (bool), if True use previously written csv file
         writetocsv (bool), if True writes pd to US_deaths.csv
@@ -39,12 +34,15 @@ def read_observed(kind, writetocsv: bool = False, use_cache: bool = False)-> pd.
     df.columns = ['DateObserved', kind.title()]
     df.reset_index(drop=True, inplace=True)
     
-    #Convert from daily to weekly measured from Sun-Sat
-    weekly = df.iloc[np.arange(df[df["DateObserved"]=="2020-01-25"].index[0],
-                                             len(df), 7)].copy()
-    weekly[kind.title()] = weekly[kind.title()].diff()
-    weekly.reset_index(drop=True, inplace=True)
-    
+    if kind == 'deaths':
+        weekly = df.copy()
+    else:
+        #Convert from daily to weekly measured from Sun-Sat for cases
+        weekly = df.iloc[np.arange(df[df["DateObserved"]=="2020-01-25"].index[0],
+                                                 len(df), 7)].copy()
+        weekly[kind.title()] = weekly[kind.title()].diff()
+        weekly.reset_index(drop=True, inplace=True)
+
     if writetocsv == True:
         weekly.to_csv(file_path) 
         

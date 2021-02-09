@@ -12,17 +12,17 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.ticker as ticker
 import matplotlib.pylab as pl
 import matplotlib.dates as mdates
-from .scores import *
+from . import scores
 from .__init__ import figures_dir, data_dir
 from functools import reduce
 import os
 
 def plotmads(Scoreboard):
 
-    df1 = getmad(Scoreboard,1)
-    df2 = getmad(Scoreboard,2)
-    df3 = getmad(Scoreboard,3)
-    df4 = getmad(Scoreboard,4)
+    df1 = scores.getmad(Scoreboard,1)
+    df2 = scores.getmad(Scoreboard,2)
+    df3 = scores.getmad(Scoreboard,3)
+    df4 = scores.getmad(Scoreboard,4)
     dfs = [df1, df2, df3, df4]
     df_merged = reduce(lambda  left,right: pd.merge(left,right,on=['model'],
                                                 how='outer'), dfs).fillna(np.NaN)
@@ -140,26 +140,7 @@ def plotallscoresdist(Scoreboard, model_target, figsize=(8, 6), interval='Weeks'
         titlelabel= 'Weekly Incidental Cases'
     elif model_target == 'Death':
         filelabel = 'CUMDEATH'
-<<<<<<< HEAD
-        titlelabel= 'Cumulative Deaths'
-        
-    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
-    Scoreboard.plot.scatter(x='delta', y='score', marker='.')
-    plt.xlabel('N-Days Forward Forecast')
-    plt.title(titlelabel + ' Forecasts')
-    save_figures(filelabel+'_ScoreVSx-Days_Forward_Forecast')   
-    plt.show(fig)
-
-    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
-    Scoreboard.plot.scatter(x='deltaW', y='score', marker='.')
-    plt.xlabel('N-Weeks Forward Forecast')
-    plt.title(titlelabel + ' Forecasts')
-    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    save_figures(filelabel+'_ScoreVSx-Weeks_Forward_Forecast') 
-    plt.show(fig)
-=======
         titlelabel= 'Weekly Cumulative Deaths'
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
     
     minn = min(Scoreboard[delta])
     maxx = max(Scoreboard[delta])
@@ -171,31 +152,6 @@ def plotallscoresdist(Scoreboard, model_target, figsize=(8, 6), interval='Weeks'
     ax[0].set_title(titlelabel + ' Forecasts')
        
     binwidth = 1
-<<<<<<< HEAD
-    Scoreboard.delta.hist(bins=range(min(Scoreboard.delta), max(Scoreboard.delta) + binwidth, binwidth))
-    #plt.xlim(4, 124)
-    plt.title(titlelabel + ' Forecasts')
-    plt.xlabel('N-Days Forward Forecast')
-    plt.ylabel('Number of forecasts made')   
-    plt.xticks(np.arange(min(Scoreboard.delta), max(Scoreboard.delta)+1, 2.0))
-    plt.xticks(rotation=90)
-    plt.grid(b=None)
-    save_figures(filelabel+'_x-Days_Forward_Forecast_Hist') 
-    plt.show(fig)
-
-    fig = plt.figure(figsize=(6, 4), dpi=300, facecolor='w', edgecolor='k')
-    Scoreboard.deltaW.hist(bins=np.arange(0.5, int(Scoreboard['deltaW'].max()) + 2*binwidth, binwidth))
-    #plt.xlim(0, 22)
-    plt.title(titlelabel + ' Forecasts')
-    plt.xlabel('N-Weeks Forward Forecast')
-    plt.ylabel('Number of forecasts made')
-    plt.xticks(np.arange(min(Scoreboard.deltaW), max(Scoreboard.deltaW)+1, 1.0))
-    plt.xticks(rotation=90)
-    plt.grid(b=None)
-    save_figures(filelabel+'_x-Weeks_Forward_Forecast_Hist')
-    plt.show(fig)
-    return 0
-=======
     Scoreboard[delta].hist(bins=np.arange(minn, maxx + binwidth, binwidth), ax=ax[1])
     ax[1].set_title(titlelabel + ' Forecasts')
     ax[1].set_xlabel('N-%s Forward Forecast' % interval)
@@ -206,7 +162,6 @@ def plotallscoresdist(Scoreboard, model_target, figsize=(8, 6), interval='Weeks'
     
     plt.tight_layout()
     save_figures(filelabel+'_x-%s_Forward_Forecast_And_Hist' % interval)
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
 
 
 def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> None:
@@ -224,11 +179,7 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
     Scoreboardx.sort_values('target_end_date',inplace=True)
     Scoreboardx.reset_index(inplace=True)  
-<<<<<<< HEAD
-    plt.figure(num=None, figsize=(8, 6), dpi=300, facecolor='w', edgecolor='k')
-=======
     plt.figure(num=None, figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
     models = Scoreboardx['model'].unique()
     colors = pl.cm.jet(np.linspace(0,1,len(curmodlist)))
     i = 0
@@ -243,15 +194,11 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
                   colors[i].tolist()[1],
                   colors[i].tolist()[2])
 
-        plt.plot(dates,PE,color=modcol,label=curmod,linewidth=2.0)
+        plt.plot(dates,PE,color=modcol,label=curmod)
         plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)
         i = i+1
 
-<<<<<<< HEAD
-    plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=2.0)    
-=======
     plt.plot(Actual['DateObserved'], Actual[scoretype],color='k', linewidth=3.0)    
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
     plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.4])
     plt.ylabel('US Cumulative '+scoretype)
     plt.xlabel('Date')
@@ -263,6 +210,108 @@ def plotlongitudinal(Actual, Scoreboard, scoretype, WeeksAhead, curmodlist) -> N
 
     save_figures(scoretype+'_'+''.join(curmodlist)+'_'+str(WeeksAhead)+'wk')
     
+
+def plotlongitudinalUNWEIGHTEDmanuscript(Actual, Scoreboard, scoretype, numweeks) -> None:
+    """Plots select model predictions against actual data longitudinally
+    Args:
+        Actual (pd.DataFrame): The actual data
+        Scoreboard (pd.DataFrame): The scoreboard dataframe
+        scoretype (str): "Cases" or "Deaths"
+        numweeks (int): number of weeks to plot
+    Returns:
+        None 
+    """
+        
+    scoretypes = ['Cases', 'Deaths']
+    if scoretype not in scoretypes:
+        raise ValueError("Invalid sim type. Expected one of: %s" % scoretypes)  
+
+    if scoretype == 'Cases':
+        titlelabel= 'weekly incidental cases'
+    elif scoretype == 'Deaths':
+        titlelabel= 'cumulative deaths'          
+        
+    numweeks += 1
+    labelp = 'Average Unweighted Forecasts'
+    colors = pl.cm.jet(np.linspace(0,1,numweeks))
+    plt.figure(num=None, figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
+    i = 0
+    
+    for WeeksAhead in range(1, numweeks):    
+        
+        i += 1
+        Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+        Scoreboardx.sort_values('target_end_date',inplace=True)
+        Scoreboardx.reset_index(inplace=True)
+
+        MerdfPRED = Scoreboardx.copy()   
+        MerdfPRED = (MerdfPRED.groupby(['target_end_date'],
+                                       as_index=False)[['CILO','PE','CIHI']].agg(lambda x: np.median(x)))
+
+        dates = MerdfPRED['target_end_date']
+        PE = MerdfPRED['PE']
+        CIlow = MerdfPRED['CILO']
+        CIhi = MerdfPRED['CIHI']
+
+        modcol = (colors[i].tolist()[0],
+                  colors[i].tolist()[1],
+                  colors[i].tolist()[2])
+        if i == 1:
+            plt.plot(dates,PE,color=modcol,label=str(i)+ ' week ahead')
+            #plt.fill_between(dates, CIlow, CIhi, color=modcol, alpha=.1)
+        else:
+            plt.plot(dates,PE,color=modcol,label=str(i)+ ' weeks ahead')
+
+    plt.plot(Actual['DateObserved'],Actual[scoretype],color='k',linewidth=3.0)    
+    plt.ylim([(Actual[scoretype].min())*0.6, (Actual[scoretype].max())*1.1])
+    plt.ylabel('US '+titlelabel, fontsize=18)
+    plt.xlabel('Target End Date', fontsize=18)
+    plt.xticks(rotation=45, fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.fmt_xdata = mdates.DateFormatter('%m-%d')
+    plt.title('Medians of all forecast point estimates', fontsize=18)
+    plt.legend(loc="upper left",labelspacing=.9, fontsize=16)
+    lims = plt.gca().get_xlim()
+    save_figures(scoretype+'_Forecasts.svg')   
+
+    plt.figure(num=None, figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
+    i = 0
+    
+    for WeeksAhead in range(1, numweeks):    
+        
+        i += 1
+        Scoreboardx = Scoreboard[Scoreboard['deltaW']==WeeksAhead].copy()
+        Scoreboardx.sort_values('target_end_date',inplace=True)
+        Scoreboardx.reset_index(inplace=True)
+
+        MerdfPRED = Scoreboardx.copy()   
+        MerdfPRED = (MerdfPRED.groupby(['target_end_date'],
+                                       as_index=False)[['score']].agg(lambda x: np.median(x)))
+
+        dates = MerdfPRED['target_end_date']
+        scores = MerdfPRED['score']
+
+        modcol = (colors[i].tolist()[0],
+                  colors[i].tolist()[1],
+                  colors[i].tolist()[2])
+        if i == 1:
+            plt.plot(dates,scores,color=modcol,label=str(i)+ ' week ahead')
+        else:
+            plt.plot(dates,scores,color=modcol,label=str(i)+ ' weeks ahead')
+    
+    plt.title('US '+titlelabel, fontsize=18)
+    plt.ylabel('Median of Forecast Scores', fontsize=18)
+    plt.xlabel('Target End Date', fontsize=18)
+    plt.xticks(rotation=45, fontsize=13)
+    plt.yticks(fontsize=13)
+    plt.fmt_xdata = mdates.DateFormatter('%m-%d')
+    #plt.title('Scores for '+labelp, fontsize=18)
+    #plt.legend(loc="upper left",labelspacing=.9, fontsize=16)
+    plt.gca().set_xlim(xmin=lims[0], xmax=lims[1])
+#     plt.ylim([Scoreboard[Scoreboard['score']!=np.NINF].score.min(),
+#               Scoreboard[Scoreboard['score']!=np.NINF].score.max()])
+
+    save_figures(scoretype+'_Average_Forward_Scores.svg')
 
 def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks, numweeks_start=1, max_weeks_ahead=8) -> None:
     """Plots select model predictions against actual data longitudinally
@@ -360,8 +409,7 @@ def plotlongitudinalUNWEIGHTED(Actual, Scoreboard, scoretype, numweeks, numweeks
 #     plt.ylim([Scoreboard[Scoreboard['score']!=np.NINF].score.min(),
 #               Scoreboard[Scoreboard['score']!=np.NINF].score.max()])
 
-    save_figures(scoretype+'_Average_Forward_Scores.svg')
-
+    save_figures(scoretype+'_Average_Forward_Scores.svg')    
 
 def plotlongitudinalALL(Actual, Scoreboard, scoretype, WeeksAhead) -> None:
     """Plots all predictions against actual data longitudinally
@@ -415,7 +463,6 @@ def plotlongitudinalALL(Actual, Scoreboard, scoretype, WeeksAhead) -> None:
     plt.title(str(WeeksAhead)+'-week-ahead Forecasts')
     save_figures(scoretype+'_All')    
 
-
 def plotgroupsTD(Scoreboardx, modeltypes, model_target) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
@@ -436,9 +483,9 @@ def plotgroupsTD(Scoreboardx, modeltypes, model_target) -> None:
         titlelabel= 'weekly cases'
     elif model_target == 'Death':
         filelabel = 'CUMDEATH'
-        titlelabel= 'weekly cumulative deaths'        
+        titlelabel= 'cumulative deaths'        
     
-    (MerdfPRED,pivMerdfPRED) = givePivotScoreTARGET(Scoreboard,modeltypes)
+    (MerdfPRED,pivMerdfPRED) = scores.givePivotScoreTARGET(Scoreboard,modeltypes)
     
     dateticks = list(perdelta(pivMerdfPRED.index[0] - timedelta(days=14), 
                               pivMerdfPRED.index[-1] + timedelta(days=14), 
@@ -491,10 +538,10 @@ def plotgroupsmodelweek(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         titlelabel= 'weekly incidental cases'
     elif model_target == 'Death':
         filelabel = 'CUMDEATH'
-        titlelabel= 'weekly cumulative deaths'       
+        titlelabel= 'cumulative deaths'       
     
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==numweeks].copy()
-    (MerdfPRED,pivMerdfPRED) = givePivotScoreTARGET(Scoreboardx,modeltypes)
+    (MerdfPRED,pivMerdfPRED) = scores.givePivotScoreTARGET(Scoreboardx,modeltypes)
     
     date0 = '2020-04-01'
     finaldate = (pd.to_datetime(Scoreboard['target_end_date'].max())+timedelta(days=64)).strftime('%Y-%m')
@@ -583,7 +630,7 @@ def plotgroupsFD(Scoreboardx: pd.DataFrame, modeltypes: pd.DataFrame,
         titlelabel= 'cumulative deaths'       
     
     Scoreboardx = Scoreboard[Scoreboard['deltaW']==numweeks].copy()
-    (MerdfPRED,pivMerdfPRED) = givePivotScoreFORECAST(Scoreboardx,modeltypes)
+    (MerdfPRED,pivMerdfPRED) = scores.givePivotScoreFORECAST(Scoreboardx,modeltypes)
     
     dateticks = list(perdelta(pivMerdfPRED.index[0] - timedelta(days=14), 
                               pivMerdfPRED.index[-1] + timedelta(days=14), 
@@ -688,7 +735,7 @@ def plotTDinf(Scoreboardx, WeeksAhead, listmods) -> None:
     plt.ylim([minscore-1,maxscore+4])
     plt.axhline(y=minscore-0.5, color='k', linestyle='-')
         
-def plotTD(Scoreboardx, WeeksAhead, models) -> None:
+def plotTDmanuscript(Scoreboardx, WeeksAhead, listmods) -> None:
     """Generates modeltype-based score plots in time (Forecast Date)
     Args:
         Scoreboard (pd.DataFrame): Scoreboard
@@ -723,38 +770,23 @@ def plotTD(Scoreboardx, WeeksAhead, models) -> None:
     dateticks = pd.date_range(date0,
                               finaldate+'-01' , freq='1M')-pd.offsets.MonthBegin(1)
 
-    colors = pl.cm.jet(np.linspace(0,1,len(models)))
+    colors = pl.cm.jet(np.linspace(0,1,len(listmods)))
     plt.figure(figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')
 
-<<<<<<< HEAD
     for i in range(len(listmods)):
         model = listmods[i][0:maxcharsinstr]
         if model in pivMerdfPRED.columns:            
             if ~pivMerdfPRED[model].isnull().all():                
                 pivMerdfPRED[model].dropna().plot(color=(colors[i].tolist()[0],
-=======
-    for i in range(len(models)):
-        if models[i] in pivMerdfPRED.columns:
-            if ~pivMerdfPRED[models[i]].isnull().all():                
-                pivMerdfPRED[models[i]].dropna().plot(color=(colors[i].tolist()[0],
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
                                                   colors[i].tolist()[1],
                                                   colors[i].tolist()[2]),
                                           marker='o')
 
-<<<<<<< HEAD
     plt.legend(loc='best',labelspacing=.5,fontsize=9)
     plt.title(str(WeeksAhead)+'-week-ahead Scores',fontsize=18)
     plt.ylabel('Scores for ' + titlelabel,fontsize=18)
     plt.xlabel('Target End Date',fontsize=18)
     plt.xlim([dateticks[0],dateticks[-1]])
-=======
-    plt.legend(loc='best',labelspacing=.5)
-    plt.title(str(WeeksAhead)+'-week-ahead Scores')
-    plt.ylabel('Scores for ' + titlelabel)
-    plt.xlabel('Target End Date')
-    plt.xlim([date0,dateticks[-1]])
->>>>>>> e072c8cecc1160509a1d2549a0185d6eba234001
     custom_tick_labels = map(lambda x: x.strftime('%Y-%m'), dateticks)
     plt.xticks(dateticks,custom_tick_labels)
     plt.xticks(rotation=45)
@@ -762,13 +794,66 @@ def plotTD(Scoreboardx, WeeksAhead, models) -> None:
     set_size(plt.gcf(), (6, 6))
     save_figures(str(WeeksAhead)+'Week/'+filelabel+'_top10models')    
 
+def plotTD(Scoreboardx, WeeksAhead, models) -> None:
+    """Generates modeltype-based score plots in time (Forecast Date)
+    Args:
+        Scoreboard (pd.DataFrame): Scoreboard
+    Returns:
+        None 
+    """
+    Scoreboard = Scoreboardx[Scoreboardx['deltaW']==WeeksAhead].copy()
+    Scoreboard['model'] = Scoreboard['model'].str.slice(0,21)
+    Scoreboard.replace([np.inf, -np.inf], np.nan,inplace=True)
 
+    if 'cases' in Scoreboardx.columns:
+        filelabel = 'INCCASE'
+        titlelabel= 'weekly incidental cases'
+    else:
+        filelabel = 'CUMDEATH'
+        titlelabel= 'cumulative deaths'        
+    
+    
+    MerdfPRED = Scoreboard.copy()
+    MerdfPRED = (MerdfPRED.groupby(['model','target_end_date'],
+                                            as_index=False)[['delta','score']].agg(lambda x: list(x)))
+
+    MerdfPRED['median'] = MerdfPRED.apply(lambda row : np.median(row['score']), axis = 1) 
+    
+    pivMerdfPRED = MerdfPRED.pivot(index='target_end_date', columns='model', values='median') 
+    
+    date0 = datetime.strptime('2020-04-25','%Y-%m-%d')
+    dateticks = list(perdelta(date0, 
+                              Scoreboardx.target_end_date.max() + timedelta(days=28), 
+                              timedelta(days=28)))
+
+    colors = pl.cm.jet(np.linspace(0,1,len(models)))
+    plt.figure(figsize=(6, 6), dpi=300, facecolor='w', edgecolor='k')
+
+    for i in range(len(models)):
+        if models[i] in pivMerdfPRED.columns:
+            if ~pivMerdfPRED[models[i]].isnull().all():                
+                pivMerdfPRED[models[i]].dropna().plot(color=(colors[i].tolist()[0],
+                                                  colors[i].tolist()[1],
+                                                  colors[i].tolist()[2]),
+                                          marker='o')
+
+    plt.legend(loc='best',labelspacing=.5)
+    plt.title(str(WeeksAhead)+'-week-ahead Scores')
+    plt.ylabel('Scores for ' + titlelabel)
+    plt.xlabel('Target End Date')
+    plt.xlim([date0,dateticks[-1]])
+    custom_tick_labels = map(lambda x: x.strftime('%Y-%m'), dateticks)
+    plt.xticks(dateticks,custom_tick_labels)
+    plt.xticks(rotation=45)
+    plt.minorticks_off()
+    set_size(plt.gcf(), (6, 6))
+    save_figures(str(WeeksAhead)+'Week/'+filelabel+'_top10models')    
+    
 def get_size(fig, dpi=100):
     with NamedTemporaryFile(suffix='.png') as f:
         fig.savefig(f.name, bbox_inches='tight', dpi=dpi)
         height, width, _channels = imread(f.name).shape
         return width / dpi, height / dpi
-
 
 def set_size(fig, size, dpi=100, eps=1e-2, give_up=2, min_size_px=10):
     target_width, target_height = size
