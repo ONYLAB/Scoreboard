@@ -8,7 +8,7 @@ Epidemiological models of COVID-19 have proliferated quickly. It is important to
   - From source install the scoreboard:
     - `git clone https://github.com/ONYLAB/Scoreboard`
     - `cd Scoreboard`
-    - `pip install -e .  # This installs the covid-sicr package from source`
+    - `pip install -e .  # This installs the package from source`
   - From source downlaod covid19 forecast hub:
     - `git clone https://github.com/reichlab/covid19-forecast-hub/`
 
