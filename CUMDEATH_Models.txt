@@ -3,13 +3,13 @@ Imperial:ensemble1
 IHME:CurveFit
 COVIDhub:baseline
 CU:nochange
-CU:scenario_high
 CU:select
 CU:scenario_mid
 CU:scenario_low
+CU:scenario_high
+COVIDhub:ensemble
 MOBS:GLEAM_COVID
 YYG:ParamSearch
-COVIDhub:ensemble
 UMass:ExpertCrowd
 UT:Mobility
 JHU_IDD:CovidSP
@@ -25,8 +25,8 @@ Covid19Sim:Simulator
 USACE:ERDC_SEIR
 SWC:TerminusCM
 Auquan:SEIR
-OliverWyman:Navigator
 CovidActNow:SEIR_CAN
+OliverWyman:Navigator
 epiforecasts:ensemble1
 NotreDame:mobility
 MITCovAlliance:SIR
@@ -55,3 +55,4 @@ Microsoft:DeepSTIA
 AIpert:pwllnod
 SigSci:TS
 COVIDhub:trained_ensemble
+IUPUI:HkPrMobiDyR
