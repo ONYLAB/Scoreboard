@@ -2,14 +2,14 @@ Imperial:ensemble2
 Imperial:ensemble1
 IHME:CurveFit
 COVIDhub:baseline
-CU:scenario_mid
 CU:select
-CU:nochange
+CU:scenario_mid
 CU:scenario_low
 CU:scenario_high
+CU:nochange
 UMass:ExpertCrowd
-COVIDhub:ensemble
 MOBS:GLEAM_COVID
+COVIDhub:ensemble
 YYG:ParamSearch
 UT:Mobility
 JHU_IDD:CovidSP
@@ -38,8 +38,8 @@ Karlen:pypm
 UCM_MESALab:FoGSEIR
 DDS:NBDS
 RPI_UW:Mob_Collision
-CEID:Walk
 LNQ:ens1
+CEID:Walk
 WalmartLabsML:LogForecasting
 SteveMcConnell:CovidComplete
 JHUAPL:Bucky
@@ -52,8 +52,8 @@ JCB:PRM
 USC:SI_kJalpha
 MIT_CritData:GBCF
 Microsoft:DeepSTIA
-AIpert:pwllnod
 SigSci:TS
+AIpert:pwllnod
 COVIDhub:trained_ensemble
 IUPUI:HkPrMobiDyR
 KITmetricslab:select_ensemble
