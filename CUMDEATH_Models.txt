@@ -15,8 +15,8 @@ UT:Mobility
 JHU_IDD:CovidSP
 LANL:GrowthRate
 CovidAnalytics:DELPHI
-UCLA:SuEIR
 IowaStateLW:STEM
+UCLA:SuEIR
 GT:DeepCOVID
 UMass:MechBayes
 PSI:DRAFT
@@ -32,14 +32,14 @@ NotreDame:mobility
 MITCovAlliance:SIR
 QJHong:Encounter
 Columbia_UNC:SurvCon
-UMich:RidgeTfReg
 RobertWalraven:ESG
-Karlen:pypm
+UMich:RidgeTfReg
 UCM_MESALab:FoGSEIR
+Karlen:pypm
 DDS:NBDS
 RPI_UW:Mob_Collision
-CEID:Walk
 LNQ:ens1
+CEID:Walk
 WalmartLabsML:LogForecasting
 SteveMcConnell:CovidComplete
 JHUAPL:Bucky
@@ -57,3 +57,4 @@ SigSci:TS
 COVIDhub:trained_ensemble
 IUPUI:HkPrMobiDyR
 KITmetricslab:select_ensemble
+MIT:Cassandra
