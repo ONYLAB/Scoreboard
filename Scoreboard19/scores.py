@@ -24,8 +24,11 @@ def futureforecasting(model_target):
         
     if model_target == 'Case':
         dfPRED = dfPREDx[dfPREDx['target'].str.contains('inc case')].copy()
+        mylist = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
     elif model_target == 'Death':
-        dfPRED = dfPREDx[dfPREDx['target'].str.contains('cum death')].copy()      
+        dfPRED = dfPREDx[dfPREDx['target'].str.contains('cum death')].copy()   
+        mylist = [0.01,0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,
+         0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99]
     
     dfPRED.reset_index(inplace=True)
     
@@ -53,6 +56,15 @@ def futureforecasting(model_target):
     mask = ((MerdfPRED['target_end_date'] > pd.to_datetime('today').normalize()) & 
            (MerdfPRED['forecast_date'] > sat))
     MerdfPRED = MerdfPRED.loc[mask]
+    
+    MerdfPRED['proper'] = ''
+    for Index in tqdm(range(0,len(MerdfPRED))): 
+        modellist = MerdfPRED['quantile'].iloc[Index]
+        proper = all(item in modellist for item in mylist)        
+        MerdfPRED.iloc[Index, MerdfPRED.columns.get_loc('proper')] = proper
+        
+    delete_row = MerdfPRED[MerdfPRED["proper"]==False].index
+    MerdfPRED.drop(delete_row,inplace=True)
     
     MerdfPRED.reset_index(inplace=True)
     
