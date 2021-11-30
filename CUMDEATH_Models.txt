@@ -3,10 +3,10 @@ Imperial:ensemble1
 IHME:CurveFit
 COVIDhub:baseline
 CU:scenario_high
-CU:scenario_low
-CU:scenario_mid
-CU:select
 CU:nochange
+CU:select
+CU:scenario_mid
+CU:scenario_low
 COVIDhub:ensemble
 UMass:ExpertCrowd
 MOBS:GLEAM_COVID
@@ -32,10 +32,10 @@ NotreDame:mobility
 MITCovAlliance:SIR
 QJHong:Encounter
 Columbia_UNC:SurvCon
-RobertWalraven:ESG
 UMich:RidgeTfReg
-UCM_MESALab:FoGSEIR
+RobertWalraven:ESG
 Karlen:pypm
+UCM_MESALab:FoGSEIR
 DDS:NBDS
 RPI_UW:Mob_Collision
 CEID:Walk
