@@ -3,14 +3,14 @@ Imperial:ensemble1
 IHME:CurveFit
 COVIDhub:baseline
 CU:nochange
-CU:scenario_high
+CU:scenario_low
 CU:scenario_mid
 CU:select
-CU:scenario_low
-MOBS:GLEAM_COVID
+CU:scenario_high
 YYG:ParamSearch
 COVIDhub:ensemble
 UMass:ExpertCrowd
+MOBS:GLEAM_COVID
 UT:Mobility
 JHU_IDD:CovidSP
 LANL:GrowthRate
@@ -25,8 +25,8 @@ Covid19Sim:Simulator
 USACE:ERDC_SEIR
 SWC:TerminusCM
 Auquan:SEIR
-OliverWyman:Navigator
 CovidActNow:SEIR_CAN
+OliverWyman:Navigator
 epiforecasts:ensemble1
 NotreDame:mobility
 MITCovAlliance:SIR
